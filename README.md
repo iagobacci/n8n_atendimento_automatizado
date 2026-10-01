@@ -29,7 +29,7 @@ flowchart TD
     Lead["👤 Cliente no WhatsApp"] <-->|Mensagem / Áudio| Evo["📲 Evolution API"]
     Evo <-->|Webhook em Tempo Real| Bot["🧠 1. BOT Agendamento Dinâmico (Core)"]
     
-    subgraph Ferramentas do Agente (AI Tools)
+    subgraph Tools ["Ferramentas do Agente (AI Tools)"]
         Bot -->|Tool| T1["📅 2. Criar Agendamento"]
         Bot -->|Tool| T2["🔍 3. Verificar Disponibilidade"]
         Bot -->|Tool| T3["🔎 4. Buscar Eventos Existentes"]
@@ -40,7 +40,7 @@ flowchart TD
     T1 & T2 & T3 & T4 & T5 <-->|Leitura e Gravação| GCal["📆 Google Calendar API"]
     Bot <-->|Memória e Regras de Negócio| DB[("🗄️ PostgreSQL Database")]
     
-    subgraph Rotinas Automáticas (Background)
+    subgraph Background ["Rotinas Automáticas (Background)"]
         Cron1["⏰ Schedule Diário"] --> R1["📦 7. Arquivar Agendamentos Passados"]
         Cron2["⏰ Schedule a cada minuto"] --> R2["🔔 8. Lembretes Automáticos (2h Antes)"]
     end
@@ -66,8 +66,6 @@ flowchart TD
 │   └── 8_Lembretes_Automaticos_Workflow.json        # Rotina: Lembrete automático 2h antes no WhatsApp
 ├── database/
 │   └── schema.sql                                  # DDL completo das tabelas PostgreSQL
-├── docs/
-│   └── midia_kit_bacci_dev.md                      # Mídia Kit comercial da solução
 ├── .env.example                                    # Modelo de variáveis de ambiente
 ├── .gitignore                                      # Proteção de credenciais e dados locais
 └── README.md                                       # Documentação completa
