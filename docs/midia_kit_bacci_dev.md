@@ -5,7 +5,7 @@
 
 ## 1. Quem é Bacci Dev?
 
-**Bacci Dev** é a marca pessoal e estúdio de soluções tecnológicas liderado por **Iago Bacci**, especialista em desenvolvimento de automações inteligentes, agentes de Inteligência Artificial para atendimento e vendas, e engenharia de dados aplicada a negócios.
+**Bacci Dev** é a marca pessoal e estúdio de soluções tecnológicas liderado por **Iago Bacci**, desenvolvedor focado na criação de automações, integração de APIs e agentes de atendimento para negócios.
 
 O foco central é simples e direto: **eliminar tarefas operacionais repetitivas, acelerar o tempo de resposta comercial a zero e transformar processos manuais em máquinas digitais de faturamento.**
 

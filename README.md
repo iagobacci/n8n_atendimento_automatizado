@@ -119,7 +119,7 @@ flowchart TD
 ## 👨‍💻 Autor & Contato
 
 **Iago Bacci** (Bacci Dev)  
-*Especialista em Desenvolvimento Web, Inteligência Artificial e Automação de Processos.*
+*Desenvolvedor*
 
 - **Instagram:** [@baccidev](https://instagram.com/baccidev)
 - **WhatsApp:** [Fale comigo no WhatsApp](https://wa.me/5511917163127)
