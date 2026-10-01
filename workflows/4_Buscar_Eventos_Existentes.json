@@ -1,0 +1,113 @@
+{
+  "name": "Buscar Eventos Existentes — Tool",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            },
+            {
+              "name": "google_calendar_id"
+            },
+            {
+              "name": "google_access_token"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0603ccb8-88d1-4aa9-9c67-da75753e16f5",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($json.google_calendar_id) }}/events?q={{ encodeURIComponent($json.query) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.google_access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "46b4c247-6497-42b3-b84a-0cb6304518de",
+      "name": "Buscar Eventos no Google",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Formatação dos eventos encontrados (JavaScript Nativo - Sem Luxon) ──────\nconst inputJson = $input.first()?.json || {};\nconst items = Array.isArray(inputJson.items) ? inputJson.items : [];\n\nif (items.length === 0) {\n  return [{\n    json: {\n      sucesso: false,\n      mensagem: 'Nenhum agendamento ativo foi encontrado para o termo especificado.'\n    }\n  }];\n}\n\nconst eventosFormatados = items.map(ev => {\n  const start = ev.start?.dateTime || ev.start?.date || '';\n  const end   = ev.end?.dateTime   || ev.end?.date   || '';\n  return `Event_ID: ${ev.id} | Título: ${ev.summary} | Início: ${start} | Fim: ${end}`;\n}).join('\\n');\n\nreturn [{\n  json: {\n    sucesso: true,\n    total_encontrados: items.length,\n    eventos_encontrados: eventosFormatados,\n    lista_eventos: items.map(ev => ({\n      event_id: ev.id,\n      titulo: ev.summary,\n      inicio: ev.start?.dateTime || ev.start?.date,\n      fim: ev.end?.dateTime || ev.end?.date\n    })),\n    mensagem: `Encontrado(s) ${items.length} agendamento(s):\\n${eventosFormatados}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "74080f37-1c11-4f3b-b883-75d2976f3544",
+      "name": "Formatar Resposta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Buscar Eventos no Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Eventos no Google": {
+      "main": [
+        [
+          {
+            "node": "Formatar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "83ece3a5-035d-4bbf-88ed-f1dc2bbde1c7",
+  "meta": {
+    "instanceId": "2c4b177cdc4ab1739f76e3a541edb38e5f9f65611ee0b153f7b3f0c9546b6ce4"
+  },
+  "nodeGroups": [],
+  "id": "gLpwgtVTCNetNGUO",
+  "tags": [
+    {
+      "updatedAt": "2026-08-28T19:54:55.307Z",
+      "createdAt": "2026-08-28T19:54:55.307Z",
+      "id": "ImrDSYA7Fn6xSikw",
+      "name": "AgendamentoWPP"
+    }
+  ]
+}

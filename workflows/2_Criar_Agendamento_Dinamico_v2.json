@@ -1,0 +1,253 @@
+{
+  "name": "Criar Agendamento — Validado",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "nome_cliente"
+            },
+            {
+              "name": "procedimento"
+            },
+            {
+              "name": "data_hora_inicio"
+            },
+            {
+              "name": "duracao_minutos"
+            },
+            {
+              "name": "telefone_cliente"
+            },
+            {
+              "name": "turno_manha_inicio"
+            },
+            {
+              "name": "turno_manha_fim"
+            },
+            {
+              "name": "turno_tarde_inicio"
+            },
+            {
+              "name": "turno_tarde_fim"
+            },
+            {
+              "name": "horarios_por_dia"
+            },
+            {
+              "name": "datas_bloqueadas"
+            },
+            {
+              "name": "google_calendar_id"
+            },
+            {
+              "name": "google_access_token"
+            },
+            {
+              "name": "google_refresh_token"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -3552,
+        1232
+      ],
+      "id": "f1f3858f-e118-41f7-9aa8-e26172255cb0",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($json.google_calendar_id) }}/events?timeMin={{ encodeURIComponent(new Date().toISOString()) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.google_access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3328,
+        1232
+      ],
+      "id": "07ccdc0e-cb4f-47a7-99f5-612d2b54f0a7",
+      "name": "Get many events",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Dados de entrada ─────────────────────────────────────────────────────────\nconst dados        = $('When Executed by Another Workflow').first().json;\nconst inputJson    = $input.first()?.json || {};\nconst list         = Array.isArray(inputJson.items) ? inputJson.items : $input.all().map(item => item.json);\nconst todosEventos = list.filter(e => e && (e.summary || e.start));\n\n// ─── Campos extraídos ─────────────────────────────────────────────────────────\nconst nomeCliente    = (dados.nome_cliente || dados.nome || dados.cliente || '').trim();\nconst primeiroNome   = nomeCliente.toLowerCase().split(' ')[0];\nconst procedimento   = (dados.procedimento || dados.servico || dados.serviço || '').trim();\nlet   dataHoraInicio = (dados.data_hora_inicio || dados.inicio || dados.start || '').trim();\nconst duracaoMinutos = Number(dados.duracao_minutos || dados.duracao || 0);\nconst telefone       = String(dados.telefone_cliente || dados.telefone || dados.numero || '').replace(/\\D/g, '');\nconst observacoes    = dados.observacoes || dados.obs || '';\n\n// ─── Limite máximo de agendamentos ──────────────────────────────────────────\nconst LIMITE_MAXIMO = 3;\n\nconst eventosDoCliente = todosEventos.filter(evento => {\n  const summary     = (evento.summary     || '').toLowerCase();\n  const description = (evento.description || '').toLowerCase();\n  const temTelefone = telefone.length     >= 8 && description.includes(telefone);\n  const temNome     = primeiroNome.length >= 3 && summary.includes(primeiroNome);\n  return temTelefone || temNome;\n});\n\nif (eventosDoCliente.length >= LIMITE_MAXIMO) {\n  return {\n    json: {\n      sucesso: false,\n      motivo: `Você já possui ${eventosDoCliente.length} agendamentos ativos. O limite máximo é de ${LIMITE_MAXIMO} por cliente.`\n    }\n  };\n}\n\n// ─── Validação de campos obrigatórios ─────────────────────────────────────────\nconst erros = [];\nif (!nomeCliente    || nomeCliente.length  < 2) erros.push('Nome do cliente ausente ou inválido.');\nif (!procedimento   || procedimento.length < 2) erros.push('Procedimento/serviço ausente.');\nif (!dataHoraInicio)                            erros.push('Data e horário de início ausentes.');\nif (!duracaoMinutos || duracaoMinutos     <= 0) erros.push('Duração do procedimento inválida.');\n\nif (erros.length > 0) {\n  return { json: { sucesso: false, motivo: 'Erro nos dados: ' + erros.join(' ') } };\n}\n\n// ─── Formatador de Fuso Horário de São Paulo ──────────────────────────────────\nconst formatterSP = new Intl.DateTimeFormat('en-US', {\n  timeZone: 'America/Sao_Paulo',\n  year: 'numeric',\n  month: '2-digit',\n  day: '2-digit',\n  hour: '2-digit',\n  minute: '2-digit',\n  second: '2-digit',\n  hour12: false\n});\n\nfunction getSPParts(dateObj) {\n  const parts = formatterSP.formatToParts(dateObj);\n  const m = {};\n  parts.forEach(p => m[p.type] = p.value);\n  return {\n    ano: Number(m.year),\n    mes: Number(m.month) - 1,\n    dia: Number(m.day),\n    hora: Number(m.hour === '24' ? '0' : m.hour),\n    minuto: Number(m.minute)\n  };\n}\n\nif (!dataHoraInicio.includes('Z') && !dataHoraInicio.includes('+') && !dataHoraInicio.match(/-\\d{2}:\\d{2}$/)) {\n  if (dataHoraInicio.length === 16) dataHoraInicio += ':00';\n  dataHoraInicio += '-03:00';\n}\n\nconst inicio = new Date(dataHoraInicio);\nif (isNaN(inicio.getTime())) {\n  return { json: { sucesso: false, motivo: 'Formato de data/hora inválido.' } };\n}\n\nconst inicioParts = getSPParts(inicio);\nconst isoDateStr = `${inicioParts.ano}-${String(inicioParts.mes + 1).padStart(2, '0')}-${String(inicioParts.dia).padStart(2, '0')}`;\nconst dataFormatadaStr = `${String(inicioParts.dia).padStart(2, '0')}/${String(inicioParts.mes + 1).padStart(2, '0')}/${inicioParts.ano}`;\n\n// 🇧🇷 1. Cálculo Automático de Feriados Nacionais Brasileiros\nfunction getPascoa(y) {\n  const a = y % 19, b = Math.floor(y / 100), c = y % 100;\n  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);\n  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;\n  const i = Math.floor(c / 4), k = c % 4, L = (32 + 2 * e + 2 * i - h - k) % 7;\n  const m = Math.floor((a + 11 * h + 22 * L) / 451);\n  const month = Math.floor((h + L - 7 * m + 114) / 31);\n  const day = ((h + L - 7 * m + 114) % 31) + 1;\n  return new Date(y, month - 1, day);\n}\n\nfunction obterFeriadosBR(y) {\n  const feriados = {};\n  feriados[`${y}-01-01`] = 'Ano Novo (Confraternização Universal)';\n  feriados[`${y}-04-21`] = 'Tiradentes';\n  feriados[`${y}-05-01`] = 'Dia do Trabalho';\n  feriados[`${y}-09-07`] = 'Independência do Brasil';\n  feriados[`${y}-10-12`] = 'Nossa Senhora Aparecida';\n  feriados[`${y}-11-02`] = 'Finados';\n  feriados[`${y}-11-15`] = 'Proclamação da República';\n  feriados[`${y}-11-20`] = 'Dia da Consciência Negra';\n  feriados[`${y}-12-25`] = 'Natal';\n\n  const pascoa = getPascoa(y);\n  const sextaSanta = new Date(pascoa); sextaSanta.setDate(pascoa.getDate() - 2);\n  feriados[`${y}-${String(sextaSanta.getMonth() + 1).padStart(2, '0')}-${String(sextaSanta.getDate()).padStart(2, '0')}`] = 'Sexta-feira Santa';\n\n  const carnavalSeg = new Date(pascoa); carnavalSeg.setDate(pascoa.getDate() - 48);\n  feriados[`${y}-${String(carnavalSeg.getMonth() + 1).padStart(2, '0')}-${String(carnavalSeg.getDate()).padStart(2, '0')}`] = 'Carnaval';\n\n  const carnavalTer = new Date(pascoa); carnavalTer.setDate(pascoa.getDate() - 47);\n  feriados[`${y}-${String(carnavalTer.getMonth() + 1).padStart(2, '0')}-${String(carnavalTer.getDate()).padStart(2, '0')}`] = 'Carnaval';\n\n  const corpus = new Date(pascoa); corpus.setDate(pascoa.getDate() + 60);\n  feriados[`${y}-${String(corpus.getMonth() + 1).padStart(2, '0')}-${String(corpus.getDate()).padStart(2, '0')}`] = 'Corpus Christi';\n\n  return feriados;\n}\n\nconst feriadosAno = obterFeriadosBR(inicioParts.ano);\nif (feriadosAno[isoDateStr]) {\n  const nomeFeriado = feriadosAno[isoDateStr];\n  return {\n    json: {\n      sucesso: false,\n      motivo: `O estabelecimento estará fechado na data ${dataFormatadaStr} por conta do feriado nacional (${nomeFeriado}).`\n    }\n  };\n}\n\n// 🔒 2. Trava de Datas Bloqueadas no cadastro\nconst datasBloqStr = String(dados.datas_bloqueadas || '');\nif (datasBloqStr.includes(isoDateStr) || datasBloqStr.includes(dataFormatadaStr)) {\n  return {\n    json: {\n      sucesso: false,\n      motivo: `O estabelecimento estará fechado na data ${dataFormatadaStr} (data bloqueada).`\n    }\n  };\n}\n\n// 🔒 3. Trava de Feriado / Bloqueio no Google Calendar\nconst palavrasChaveBloqueio = ['feriado', 'fechado', 'bloqueado', 'folga', 'recesso', 'independência', 'independencia', 'não atende', 'nao atende', 'sem atendimento'];\n\nconst ehFeriadoOuBloqueadoGC = todosEventos.some(ev => {\n  if (ev.status === 'cancelled') return false;\n\n  const summary = (ev.summary || '').toLowerCase();\n  const desc = (ev.description || '').toLowerCase();\n  const temPalavraChave = palavrasChaveBloqueio.some(p => summary.includes(p) || desc.includes(p));\n\n  if (ev.start && ev.start.date) {\n    const sDate = ev.start.date;\n    const eDate = ev.end?.date || sDate;\n    if (isoDateStr >= sDate && isoDateStr < eDate) return true;\n    if (sDate === isoDateStr) return true;\n  }\n\n  if (temPalavraChave) {\n    if (ev.start?.dateTime) {\n      const sParts = getSPParts(new Date(ev.start.dateTime));\n      if (sParts.ano === inicioParts.ano && sParts.mes === inicioParts.mes && sParts.dia === inicioParts.dia) {\n        return true;\n      }\n    }\n  }\n\n  return false;\n});\n\nif (ehFeriadoOuBloqueadoGC) {\n  return {\n    json: {\n      sucesso: false,\n      motivo: `O estabelecimento estará fechado na data ${dataFormatadaStr} por conta de feriado ou bloqueio na agenda.`\n    }\n  };\n}\n\nconst agoraParts = getSPParts(new Date());\n\nconst inicioTimestamp = Date.UTC(inicioParts.ano, inicioParts.mes, inicioParts.dia, inicioParts.hora, inicioParts.minuto);\nconst agoraTimestamp  = Date.UTC(agoraParts.ano, agoraParts.mes, agoraParts.dia, agoraParts.hora, agoraParts.minuto);\n\nif (inicioTimestamp < agoraTimestamp) {\n  return {\n    json: {\n      sucesso: false,\n      motivo: 'Não é possível realizar agendamentos para datas ou horários que já passaram. Escolha uma data futura.'\n    }\n  };\n}\n\nif (inicioTimestamp < agoraTimestamp + 30 * 60000) {\n  return {\n    json: {\n      sucesso: false,\n      motivo: 'Agendamentos exigem uma antecedência mínima de 30 minutos a partir do horário atual. Escolha um horário mais tarde.'\n    }\n  };\n}\n\nif (![0, 30].includes(inicioParts.minuto)) {\n  return { json: { sucesso: false, motivo: 'O horário não segue a grade de :00 ou :30.' } };\n}\n\nconst dateSPForDay = new Date(Date.UTC(inicioParts.ano, inicioParts.mes, inicioParts.dia, 12, 0, 0));\nlet diaSemana = dateSPForDay.getUTCDay();\nif (diaSemana === 0) diaSemana = 7;\n\nfunction paraMinutos(hhmm) {\n  if (!hhmm) return 0;\n  const [h, m] = String(hhmm).split(':').map(Number);\n  return h * 60 + m;\n}\n\nfunction obterHorariosDoDia(diaSem, d) {\n  let hPorDia = d.horarios_por_dia;\n  if (typeof hPorDia === 'string') {\n    try { hPorDia = JSON.parse(hPorDia); } catch(e) {}\n  }\n  \n  const mapaVariantes = {\n    1: ['1', 'segunda', 'segunda-feira', 'segunda_feira'],\n    2: ['2', 'terca', 'terça', 'terca-feira', 'terça-feira', 'terca_feira', 'terça_feira'],\n    3: ['3', 'quarta', 'quarta-feira', 'quarta_feira'],\n    4: ['4', 'quinta', 'quinta-feira', 'quinta_feira'],\n    5: ['5', 'sexta', 'sexta-feira', 'sexta_feira'],\n    6: ['6', 'sabado', 'sábado', 'sabado_feira'],\n    7: ['7', 'domingo']\n  };\n\n  const chavesProcurar = mapaVariantes[diaSem] || [String(diaSem)];\n\n  let configDia = null;\n  if (hPorDia && typeof hPorDia === 'object') {\n    const chavesObjeto = Object.keys(hPorDia);\n    for (const key of chavesObjeto) {\n      const keyNorm = key.trim().toLowerCase();\n      if (chavesProcurar.some(varKey => varKey === keyNorm)) {\n        configDia = hPorDia[key];\n        break;\n      }\n    }\n  }\n  \n  if (configDia === false || (configDia && configDia.fechado === true)) {\n    return { aberto: false };\n  }\n  \n  if (configDia && typeof configDia === 'object') {\n    return {\n      aberto: true,\n      manhaIni: configDia.manha_inicio || configDia.manha?.[0] || d.turno_manha_inicio || '08:00',\n      manhaFim: configDia.manha_fim    || configDia.manha?.[1] || d.turno_manha_fim    || '12:00',\n      tardeIni: configDia.tarde_inicio || configDia.tarde?.[0] || d.turno_tarde_inicio || '13:00',\n      tardeFim: configDia.tarde_fim    || configDia.tarde?.[1] || d.turno_tarde_fim    || '19:00',\n      semManha: configDia.sem_manha === true || configDia.manha === null,\n      semTarde: configDia.sem_tarde === true || configDia.tarde === null\n    };\n  }\n  \n  return {\n    aberto: true,\n    manhaIni: d.turno_manha_inicio || '08:00',\n    manhaFim: d.turno_manha_fim    || '12:00',\n    tardeIni: d.turno_tarde_inicio || '13:00',\n    tardeFim: d.turno_tarde_fim    || '19:00',\n    semManha: false,\n    semTarde: false\n  };\n}\n\nconst horDia = obterHorariosDoDia(diaSemana, dados);\n\nif (!horDia.aberto) {\n  return { json: { sucesso: false, motivo: 'O estabelecimento não atende neste dia da semana.' } };\n}\n\nconst inicioMin = inicioParts.hora * 60 + inicioParts.minuto;\nconst fimDate = new Date(inicio.getTime() + duracaoMinutos * 60000);\nconst fimParts = getSPParts(fimDate);\nconst fimMinCalc = fimParts.hora * 60 + fimParts.minuto;\n\nconst manhaIniMin = paraMinutos(horDia.manhaIni);\nconst manhaFimMin = paraMinutos(horDia.manhaFim);\nconst tardeIniMin = paraMinutos(horDia.tardeIni);\nconst tardeFimMin = paraMinutos(horDia.tardeFim);\n\nconst cabeNaManha = !horDia.semManha && inicioMin >= manhaIniMin && fimMinCalc <= manhaFimMin;\nconst cabeNaTarde = !horDia.semTarde && inicioMin >= tardeIniMin && fimMinCalc <= tardeFimMin;\n\nif (!cabeNaManha && !cabeNaTarde) {\n  return { json: { sucesso: false, motivo: 'O horário está fora do expediente do dia ou ultrapassa o fim do turno.' } };\n}\n\nfunction formatISOWithOffset(dateObj) {\n  const sp = getSPParts(dateObj);\n  const yyyy = sp.ano;\n  const mm = String(sp.mes + 1).padStart(2, '0');\n  const dd = String(sp.dia).padStart(2, '0');\n  const hh = String(sp.hora).padStart(2, '0');\n  const mi = String(sp.minuto).padStart(2, '0');\n  return `${yyyy}-${mm}-${dd}T${hh}:${mi}:00-03:00`;\n}\n\nreturn {\n  json: {\n    sucesso:              true,\n    titulo_evento:        `${nomeCliente}, ${procedimento}`,\n    data_hora_inicio_iso: formatISOWithOffset(inicio),\n    data_hora_fim_iso:    formatISOWithOffset(fimDate),\n    descricao_evento:     `Telefone: ${telefone}${observacoes ? ' | Observações: ' + observacoes : ''}`,\n    calendar_id:          dados.calendar_id || dados.google_calendar_id || 'seu_email@dominio.com',\n    google_access_token:  dados.google_access_token\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3104,
+        1232
+      ],
+      "id": "a6046870-a31a-4e8d-b5d0-c30bdd601777",
+      "name": "Validar Regras de Negocio"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c1234567-89ab-4c1d-9e02-111111111111",
+              "leftValue": "={{ $json.sucesso }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2880,
+        1232
+      ],
+      "id": "5a4c895d-39b9-486a-a14d-c8104e16113c",
+      "name": "Validação Ok?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($json.calendar_id) }}/events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.google_access_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"summary\": \"{{ $json.titulo_evento }}\",\n  \"description\": \"{{ $json.descricao_evento }}\",\n  \"start\": { \"dateTime\": \"{{ $json.data_hora_inicio_iso }}\" },\n  \"end\": { \"dateTime\": \"{{ $json.data_hora_fim_iso }}\" }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2656,
+        1136
+      ],
+      "id": "fb2e1ac4-a73e-4641-a58e-646495460e64",
+      "name": "Google Calendar - Criar Evento"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { sucesso: false, mensagem_para_agente: $json.motivo } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2656,
+        1328
+      ],
+      "id": "c9228fd5-648c-4746-8335-01124b26920f",
+      "name": "Retornar Erro Validação"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Validar Regras de Negocio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Regras de Negocio": {
+      "main": [
+        [
+          {
+            "node": "Validação Ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validação Ok?": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar - Criar Evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retornar Erro Validação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6628c99d-2e97-42fa-9f0d-06504d1f5ad0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2c4b177cdc4ab1739f76e3a541edb38e5f9f65611ee0b153f7b3f0c9546b6ce4"
+  },
+  "nodeGroups": [],
+  "id": "adaNEB6zIJfNY7n1",
+  "tags": [
+    {
+      "updatedAt": "2026-08-28T19:54:55.307Z",
+      "createdAt": "2026-08-28T19:54:55.307Z",
+      "id": "ImrDSYA7Fn6xSikw",
+      "name": "AgendamentoWPP"
+    }
+  ]
+}

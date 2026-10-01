@@ -1,56 +1,54 @@
-# 🤖 Agente de IA para WhatsApp & Sincronização Google Agenda (n8n)
-> **Solução completa de atendimento conversacional 24/7, qualificação de leads, agendamento em tempo real e esteira de disparo seguro anti-ban.**  
+# 🤖 Sistema de Agente de IA para WhatsApp & Agendamento Inteligente (n8n)
+> **Solução completa e modular de atendimento conversacional 24/7 com IA, sincronização em tempo real com Google Agenda e disparo automático de lembretes 2 horas antes da consulta.**  
 > *Desenvolvido por **Bacci Dev** (Iago Bacci)*
 
 ---
 
-![n8n](https://img.shields.io/badge/n8n-Workflow%20Automation-FF6584?style=for-the-badge&logo=n8n)
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![n8n](https://img.shields.io/badge/n8n-Modular%20Workflows-FF6584?style=for-the-badge&logo=n8n)
 ![WhatsApp](https://img.shields.io/badge/WhatsApp-Evolution%20API-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)
 ![Google Calendar](https://img.shields.io/badge/Google%20Calendar-Sync%20API-4285F4?style=for-the-badge&logo=googlecalendar&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-336791?style=for-the-badge&logo=postgresql&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 ---
 
 ## 🎯 Sobre o Projeto
 
-Este projeto é uma solução de **automação conversacional de alto nível** para negócios que precisam atender clientes sem demora, tirar dúvidas frequentes e agendar consultas/reuniões automaticamente no calendário, sem choque de horário e sem exigir intervenção manual humana.
+Este projeto é um ecossistema completo de **agente de inteligência artificial para WhatsApp** com integração nativa ao **Google Agenda** e banco de dados **PostgreSQL / Supabase**.
 
-Embora o case demonstrativo inicial tenha sido modelado para clínicas odontológicas e de saúde, o fluxo foi construído de forma **100% modular e adaptável** para:
-- Clínicas médicas, odontológicas e estéticas
-- Escritórios de advocacia e consultorias
-- Imobiliárias e corretores
-- Prestadores de serviços e empresas B2B
+Diferente de chatbots básicos engessados, o sistema opera de forma **100% dinâmica e modular**, suportando múltiplos estabelecimentos (multi-tenant) e utilizando IA para entender linguagem natural, tirar dúvidas sobre serviços e preços, verificar disponibilidade na agenda, criar, atualizar e cancelar agendamentos, além de enviar lembretes automáticos para reduzir o índice de faltas (*no-show*).
 
 ---
 
-## ⚡ Arquitetura da Solução
+## 🏗️ Arquitetura dos 8 Workflows
+
+O sistema é dividido em **1 Agente Orquestrador**, **5 Ferramentas (Sub-workflows)** e **2 Rotinas em Segundo Plano**:
 
 ```mermaid
 flowchart TD
-    Lead["👤 Lead / Cliente no WhatsApp"] -->|Envia mensagem| Evo["📲 Evolution API"]
-    Evo -->|Webhook em tempo real| N8N["⚙️ Orquestrador n8n"]
+    Lead["👤 Cliente no WhatsApp"] <-->|Mensagem / Áudio| Evo["📲 Evolution API"]
+    Evo <-->|Webhook em Tempo Real| Bot["🧠 1. BOT Agendamento Dinâmico (Core)"]
     
-    subgraph IA & Regras de Negócio
-        N8N --> Agent["🧠 Agente Conversacional (IA / LLM)"]
-        Agent -->|Verifica procedimentos e regras| Prompt["📋 Base de Conhecimento do Negócio"]
+    subgraph Ferramentas do Agente (AI Tools)
+        Bot -->|Tool| T1["📅 2. Criar Agendamento"]
+        Bot -->|Tool| T2["🔍 3. Verificar Disponibilidade"]
+        Bot -->|Tool| T3["🔎 4. Buscar Eventos Existentes"]
+        Bot -->|Tool| T4["🔄 5. Atualizar Agendamento"]
+        Bot -->|Tool| T5["❌ 6. Cancelar Agendamento"]
     end
     
-    Agent -->|Consulta e agenda horário| GCal["📅 Google Calendar"]
-    Agent -->|Registra lead e status| Sheets["📊 Google Sheets / CRM"]
-    N8N -->|Resposta instantânea com pausas humanas| Evo
-    Evo -->|Mensagem entregue| Lead
+    T1 & T2 & T3 & T4 & T5 <-->|Leitura e Gravação| GCal["📆 Google Calendar API"]
+    Bot <-->|Memória e Regras de Negócio| DB[("🗄️ PostgreSQL / Supabase")]
+    
+    subgraph Rotinas Automáticas (Background)
+        Cron1["⏰ Schedule Diário"] --> R1["📦 7. Arquivar Agendamentos Passados"]
+        Cron2["⏰ Schedule a cada minuto"] --> R2["🔔 8. Lembretes Automáticos (2h Antes)"]
+    end
+    
+    R1 --> DB
+    R2 -->|Busca eventos em 2h| GCal
+    R2 -->|Dispara Lembrete via WhatsApp| Evo
 ```
-
----
-
-## 🚀 Principais Funcionalidades
-
-1. **Atendimento 24/7 em Linguagem Natural:** Responde de forma humanizada, empática e contextualizada, eliminando respostas robóticas engessadas.
-2. **Sincronização Direta com Google Agenda:** Consulta datas/horários vagos em tempo real e bloqueia o evento assim que o cliente confirma, sem risco de conflito.
-3. **Esteira de Disparo Anti-Ban com Google Sheets:** Agendamento cronometrado em horário comercial (Seg-Sex 09:30), pausas randômicas e limites diários seguros.
-4. **Higienização Inteligente de Nomes (Python):** Script que remove lixo cadastral (ex: `CRO-SP`, sufixos de cidade, especialidades em caixa alta) e formata a saudação ideal (`Dr.`, `Dra.`, primeiro nome).
-5. **Tratamento de Exceções & Fail-Safe:** Nós configurados com `Continue on Fail` para que uma falha de conexão ou número inválido nunca interrompa o lote de automação.
 
 ---
 
@@ -58,62 +56,63 @@ flowchart TD
 
 ```text
 ├── workflows/
-│   ├── workflow_disparador_google_sheets_n8n.json  # Workflow de disparo seguro via planilha
-│   └── workflow_disparador_whatsapp_n8n.json       # Workflow modular da Evolution API
-├── scripts/
-│   ├── extrator_whatsapp.py                        # Coletor e formatador multithread de dados
-│   ├── higienizar_nomes_whatsapp.py                # Limpeza e padronização de nomes
-│   └── requirements.txt                            # Dependências Python
-├── exemplos/
-│   └── modelo_planilha_contatos.csv                # Modelo fictício seguro para testes
+│   ├── 1_BOT_Agendamento_Dinamico_v2.json           # Agente Principal (Orquestração, IA e Memória)
+│   ├── 2_Criar_Agendamento_Dinamico_v2.json         # Tool: Criação de consulta no Google Calendar
+│   ├── 3_Verificar_Disponibilidade_Dinamico_v2.json # Tool: Consulta de slots livres sem conflito
+│   ├── 4_Buscar_Eventos_Existentes.json             # Tool: Localização de agendamentos do cliente
+│   ├── 5_Atualizar_Agendamento_Tool.json            # Tool: Remarcação de data e horário
+│   ├── 6_Cancelar_Agendamento_Tool.json             # Tool: Cancelamento e liberação do horário
+│   ├── 7_Arquivar_Agendamentos_Passados.json        # Rotina: Arquivamento de histórico passado
+│   └── 8_Lembretes_Automaticos_Workflow.json        # Rotina: Lembrete automático 2h antes no WhatsApp
+├── database/
+│   └── schema.sql                                  # DDL completo das tabelas PostgreSQL/Supabase
 ├── docs/
 │   └── midia_kit_bacci_dev.md                      # Mídia Kit comercial da solução
 ├── .env.example                                    # Modelo de variáveis de ambiente
-├── .gitignore                                      # Proteção de dados sensíveis e LGPD
+├── .gitignore                                      # Proteção de credenciais e dados locais
 └── README.md                                       # Documentação completa
 ```
 
 ---
 
-## 🛠️ Como Instalar e Rodar
+## ⚡ Principais Funcionalidades
 
-### 1. Clonar o Repositório
-```bash
-git clone https://github.com/iagobacci/agente-ia-whatsapp-n8n.git
-cd agente-ia-whatsapp-n8n
-```
-
-### 2. Configurar os Scripts Python
-```bash
-cd scripts
-python -m venv venv
-# No Windows:
-.\venv\Scripts\activate
-# No Linux/Mac:
-source venv/bin/activate
-
-pip install -r requirements.txt
-```
-
-Para testar o higienizador de nomes:
-```bash
-python higienizar_nomes_whatsapp.py
-```
-
-### 3. Importar os Workflows no n8n
-1. Abra o seu painel do **n8n**.
-2. Clique em **Workflows ➔ Import from File**.
-3. Selecione o arquivo em `workflows/workflow_disparador_google_sheets_n8n.json`.
-4. Conecte suas credenciais do **Google Sheets** e as credenciais da **Evolution API**.
-5. Ative o nó de agendamento cron para rodar no fuso horário `America/Sao_Paulo`.
+1. **Atendimento Humanizado 24/7:** O agente compreende variações linguísticas, gírias e solicitações contextuais, respondendo com naturalidade.
+2. **Consulta e Agendamento em Tempo Real:** Conecta-se diretamente à API do Google Calendar para checar conflitos antes de confirmar.
+3. **Gestão Completa do Agendamento:** Permite remarcar ou cancelar consultas diretamente pelo chat do WhatsApp.
+4. **Lembrete Automático 2 Horas Antes:** Um cron verifica a agenda a cada minuto e envia automaticamente uma mensagem personalizada de confirmação com opções de resposta, salvando no banco para nunca enviar duplicado.
+5. **Transbordo para Atendimento Humano:** Caso o cliente solicite falar com um atendente, o bot pausa a automação para aquele número por 4 horas automaticamente.
+6. **Multi-Tenant (Múltiplas Empresas):** O banco de dados suporta instâncias isoladas com agentes, nomes de profissionais, especialidades e calendários próprios.
 
 ---
 
-## 🛡️ Segurança e Proteção LGPD
+## 🛠️ Como Instalar e Configurar
 
-- Este repositório **não contém credenciais reais, chaves de API nem listas de contatos de clientes**.
-- Arquivos de mídia grandes (`.mov`, `.mp4`) e bancos de dados reais são mantidos fora do controle de versão pelo `.gitignore`.
-- Ao utilizar em produção, garanta que suas variáveis sejam carregadas exclusivamente via `.env` ou pelo cofre de credenciais nativo do n8n.
+### 1. Banco de Dados (PostgreSQL / Supabase)
+1. Crie um projeto no [Supabase](https://supabase.com) ou banco PostgreSQL próprio.
+2. Acesse o **SQL Editor**.
+3. Copie e execute o conteúdo do arquivo [`database/schema.sql`](database/schema.sql).
+4. As tabelas `estabelecimentos`, `servicos`, `leads`, `lembretes_enviados` e `n8n_chat_histories` serão criadas com todos os índices necessários.
+
+### 2. Configurar o n8n
+1. No seu painel do n8n, crie uma pasta para o projeto.
+2. Importe os **8 arquivos** da pasta `workflows/` na seguinte ordem de referência:
+   - Primeiro os sub-workflows (arquivos `2_` a `6_`).
+   - Em seguida as rotinas em segundo plano (arquivos `7_` e `8_`).
+   - Por fim, o agente principal (`1_BOT_Agendamento_Dinamico_v2.json`).
+3. Conecte suas credenciais do **PostgreSQL** e **Evolution API** nos nós correspondentes.
+4. Configure as variáveis de ambiente baseadas no arquivo `.env.example`.
+
+### 3. Conectar a Evolution API
+- Aponte o Webhook da sua instância na Evolution API para a URL do Webhook do workflow `1_BOT_Agendamento_Dinamico_v2`.
+- Eventos recomendados: `MESSAGES_UPSERT`.
+
+---
+
+## 🛡️ Segurança & Boas Práticas
+
+- **Credenciais Sanitizadas:** Todos os arquivos de workflow deste repositório tiveram seus identificadores reais, Client Secrets e tokens OAuth substituídos por placeholders seguros.
+- **Isolamento de Memória:** O histórico de conversa é indexado por chave de sessão com expiração e controle de transbordo humano.
 
 ---
 
@@ -130,4 +129,4 @@ python higienizar_nomes_whatsapp.py
 
 ## 📄 Licença
 
-Este projeto está sob a licença [MIT](LICENSE). Sinta-se livre para usar, adaptar e estender para seus projetos comerciais e clientes.
+Este projeto está sob a licença [MIT](LICENSE).

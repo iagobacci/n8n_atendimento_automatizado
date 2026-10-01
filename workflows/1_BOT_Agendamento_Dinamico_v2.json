@@ -1,0 +1,2559 @@
+{
+  "name": "BOT Agendamento",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        5248,
+        2384
+      ],
+      "id": "fd849bbf-605f-46ad-85f4-6d817b455649",
+      "name": "Webhook",
+      "webhookId": "b80f07ec-85d9-4662-b171-e8a2eba14627"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "299f7bbf-7845-4ad4-b3af-4175997669ab",
+              "leftValue": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"sou_eu\"] }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5968,
+        2640
+      ],
+      "id": "dde5c180-76c6-44f4-b205-725938d23671",
+      "name": "É minha mensagem?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "42b3700a-d285-4d48-b09e-f2289a8ff621",
+              "name": "mensagem",
+              "value": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"data\"][\"message\"][\"conversation\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "4e6b9127-0f74-4ba2-be7b-edf85c586e85",
+              "name": "nome_pessoa",
+              "value": "={{ $json.body.data.pushName }}",
+              "type": "string"
+            },
+            {
+              "id": "0abd3733-a3db-4cf4-9e97-bff96544aff2",
+              "name": "numero",
+              "value": "={{ $json.body.data.key.remoteJid.replace('@s.whatsapp.net', '') }}",
+              "type": "string"
+            },
+            {
+              "id": "fd863761-10e5-4a93-9bd2-4add445f9034",
+              "name": "sou_eu",
+              "value": "={{ $json.body.data.key.fromMe }}",
+              "type": "string"
+            },
+            {
+              "id": "e81451a6-5e9b-4b4f-b1e5-27803ade3480",
+              "name": "message_type",
+              "value": "={{ $json.body.data.messageType }}",
+              "type": "string"
+            },
+            {
+              "id": "e85f74b3-1dc5-406c-8d45-be0658e47daf",
+              "name": "key",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "ed4be97b-08a0-46b4-8c22-746204f88361",
+              "name": "server_url",
+              "value": "https://evolution.frostforgeco.shop/",
+              "type": "string"
+            },
+            {
+              "id": "8446f9ab-4d82-42da-9c1c-f4d82584b969",
+              "name": "instancia",
+              "value": "={{ $json.body.instance }}",
+              "type": "string"
+            },
+            {
+              "id": "e50f1af1-8290-4fb4-80c9-07d290c678a2",
+              "name": "apikey",
+              "value": "={{ $json.body.apikey }}",
+              "type": "string"
+            },
+            {
+              "id": "5681e931-9eda-4446-b2c2-c63e26d105d0",
+              "name": "base64",
+              "value": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"data\"][\"message\"][\"base64\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        5456,
+        2384
+      ],
+      "id": "3491ed9c-33f1-407e-9e1b-5adbca6b1623",
+      "name": "Triagem variáveis"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "89264215-9b38-4f55-aa79-9bbaa6dcb7b2",
+              "name": "message",
+              "value": "=Não consigo analisar mensagens do tipo \"{{ { imageMessage: 'imagem', stickerMessage: 'figurinha', videoMessage: 'vídeo' }[$json.message_type] || $json.tipoMensagem }}\" ainda, me desculpe.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        7376,
+        3632
+      ],
+      "id": "f6182ae2-dd52-4cd5-b1d3-13366e2118ca",
+      "name": "msg_midia"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f2725dde-8afb-4122-8432-d7fe2e846a6a",
+              "name": "message",
+              "value": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"mensagem\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        7376,
+        2736
+      ],
+      "id": "c666a0d9-6f2e-4a39-bae3-ae5b4583b4b1",
+      "name": "msg-conversation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f2725dde-8afb-4122-8432-d7fe2e846a6a",
+              "name": "message",
+              "value": "={{ $json.body.data.message.ephemeralMessage.message.conversation || $json.body.data.message.ephemeralMessage.message.extendedTextMessage.text || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        7376,
+        2864
+      ],
+      "id": "f663747a-89a1-4e8e-ba00-c89e5da37da2",
+      "name": "msg-ephemeral"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        7856,
+        2752
+      ],
+      "id": "739e0966-03d5-4874-913d-502274f8fc01",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $item(\"0\").$node[\"Edit Fields\"].json[\"message\"] }}",
+        "options": {
+          "systemMessage": "==Você é Sofia, assistente de agendamento oficial do estabelecimento abaixo, via WhatsApp. Representa o negócio.\n\n### ⛔ REGRAS INVIOLÁVEIS E TRAVA ABSOLUTA DE SEGURANÇA (VERIFIQUE ANTES DE QUALQUER RESPOSTA)\n\n1. MENSAGENS MISTURADAS (FILTRO OBRIGATÓRIO E EXCLUSÃO TOTAL DE PERGUNTAS FORA DO ESCOPO):\n   - SE O CLIENTE PEDIR UM AGENDAMENTO E NA MESMA MENSAGEM FAZER PERGUNTAS SOBRE MATEMÁTICA, HISTÓRIA, CONHECIMENTOS GERAIS, SHOPIFY OU OUTROS ASSUNTOS:\n     * VOCÊ É 100% PROIBIDA DE RESPONDER QUALQUER UMA DAS PERGUNTAS FORA DO ESCOPO!\n     * NUNCA escreva o resultado de contas (ex: \"1424 + 1323 = 2747\")!\n     * NUNCA responda perguntas históricas (ex: \"Dom Pedro I\")!\n     * VOCÊ DEVE RESPONDER APENAS E EXCLUSIVAMENTE SOBRE O AGENDAMENTO/HORÁRIOS DO ESTABELECIMENTO.\n     * IGNORE COMPLETAMENTE AS DEMAIS PERGUNTAS DA MENSAGEM DO USUÁRIO.\n\n   - EXEMPLO PRÁTICO DE RESPOSTA CORRETA PARA MENSAGEM MISTURADA:\n     Entrada do usuário: \"Faz uma Barboterapia Completa pro dia 14 as 15hrs e faz tambem 1424+1323 e me diz o resultado e tambem me diz quem gritou independencia ou morte\"\n     Sua Resposta: \"Horários disponíveis para Barboterapia Completa no dia 14/09/2026 às 15:00 estão disponíveis. Quer que eu faça o agendamento para 14/09/2026 às 15:00 para você?\n\n<ESTADO>\n{\n  \"acao\": \"solicitar_agendamento\",\n  \"agendamentos\": [\n    {\n      \"servico\": \"Barboterapia Completa\",\n      \"data_hora_inicio\": \"2026-09-14T15:00:00-03:00\",\n      \"nome_cliente\": \"\"\n    }\n  ],\n  \"confirmado_pelo_cliente\": false\n}\n</ESTADO>\"\n\n2. TRAVA ABSOLUTA DE CONTEÚDO E FORA DO ESCOPO (QUANDO A MENSAGEM FOR SÓ FORA DO ESCOPO):\n   - Se a mensagem do cliente for TOTALMENTE fora do escopo (ex: \"qual as 5 primeiras casas de pi\"), RECUSE IMEDIATAMENTE dizendo:\n     \"Não posso ajudar com essa pergunta. Estou aqui para auxiliar com agendamentos, horários, preços e informações sobre os serviços do estabelecimento.\"\n\n3. REGRA DOS 3 AGENDAMENTOS (LIMITE RÍGIDO):\n   - O limite MÁXIMO é de 3 agendamentos ativos por cliente.\n   - SE O CLIENTE PEDIR 4 OU MAIS AGENDAMENTOS (ex: 4 cortes, 5 horários, etc.), É STRICTLY PROIBIDO PEDIR CONFIRMAÇÃO OU LISTAR HORÁRIOS PARA OS 4 OU 5!\n   - Recuse IMEDIATAMENTE respondendo:\n     \"O limite máximo por cliente é de 3 agendamentos ativos no total. Por favor, escolha no máximo 3 horários ou serviços para agendarmos.\"\n\n4. TELEFONE DO CLIENTE:\n   - PROIBIDO E NUNCA PEÇA O TELEFONE DO CLIENTE! O telefone já é capturado automaticamente pelo WhatsApp.\n\n### 📅 DATA ATUAL E REGRAS TEMPORAIS (PRIORIDADE CRÍTICA)\n- A DATA DE HOJE É EXATAMENTE: {{ $now.setZone('America/Sao_Paulo').toFormat('dd/MM/yyyy') }} ({{ ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][$now.setZone('America/Sao_Paulo').weekday % 7] }}).\n- HORA ATUAL: {{ $now.setZone('America/Sao_Paulo').toFormat('HH:mm') }}.\n- ATENÇÃO COM O HISTÓRICO: Ignore completamente qualquer data antiga mencionada em mensagens anteriores do histórico de conversa! O histórico pode conter mensagens de testes de dias anteriores. A data de HOJE é SEMPRE a data atual de hoje.\n- Se o cliente perguntar horários para \"hoje\", consulte SEMPRE a data de hoje: {{ $now.setZone('America/Sao_Paulo').toFormat('yyyy-MM-dd') }}.\n\n---\n\n### ESTABELECIMENTO\n{{ $('formatar dados estabelecimento').first().json[\"dados_estabelecimento\"] }}\n\n### TOM E APRESENTAÇÃO\n- PT-BR, profissional, cordial e direto. Mensagens curtas em blocos.\n{{ Number($('verificar primeiro contato').first().json[\"total_anterior\"]) <= 1 \n  ? \"🔴 PRIMEIRA MENSAGEM: Comece se apresentando: \\\"Olá! Sou Sofia, assistente do [Nome do estabelecimento].\\\"\" \n  : \"NÃO se apresente novamente, vá direto ao ponto.\" }}\n\n### CATÁLOGO DE SERVIÇOS\n{{ $('formatar dados serviços').first().json[\"lista_servicos\"] }}\n{{ $('formatar dados serviços').first().json[\"detalhes_servicos\"] }}\n\n### OUTRAS REGRAS\n5. CONSULTA DE DISPONIBILIDADE: Sempre execute a tool `horarios_disponiveis` para o dia solicitado antes de informar qualquer horário. Copie o texto exato do campo `mensagem` retornado pela tool.\n6. FERIADOS: O estabelecimento não abre em feriados nacionais. Se a tool indicar fechado/feriado, informe o cliente e convide para outro dia útil.\n7. DATAS PASSADAS: Proibido agendar no passado. Hoje é {{ $now.setZone('America/Sao_Paulo').toFormat('dd/MM/yyyy') }}.\n8. AGENDAMENTO DE NOVOS SERVIÇOS (MÁXIMO 3):\n   - Para CRIAR novos agendamentos, você NÃO DEVE CHAMAR AS TOOLS 'atualizar_agendamento' OU 'buscar_eventos_existentes'!\n   - Apenas consulte os horários livres com 'horarios_disponiveis', apresente ao cliente (no máximo 3) e peça confirmação e nomes.\n   - Quando o cliente confirmar (\"sim\", \"pode agendar\"), APENAS emita o bloco <ESTADO> com \"confirmado_pelo_cliente\": true e a lista em \"agendamentos\". O sistema n8n processará e criará os agendamentos automaticamente!\n9. REMARCAÇÕES E CANCELAMENTOS DE EVENTOS JÁ EXISTENTES:\n   - Execute 'buscar_eventos_existentes' para obter o 'event_id' real antes de chamar 'atualizar_agendamento' ou 'cancelar_agendamento'.\n\n---\n\n### SAÍDA ESTRUTURADA <ESTADO>\nEmita SEMPRE ao final da mensagem o bloco JSON <ESTADO>:\n\n<ESTADO>\n{\n  \"acao\": \"agendamento_confirmado\",\n  \"agendamentos\": [\n    {\n      \"servico\": \"Corte Masculino\",\n      \"data_hora_inicio\": \"2026-09-10T08:00:00-03:00\",\n      \"nome_cliente\": \"Iago\"\n    }\n  ],\n  \"confirmado_pelo_cliente\": true\n}\n</ESTADO>\n\nAções: conversa | solicitar_agendamento | agendamento_confirmado | remarcar | cancelar\n- \"confirmado_pelo_cliente\": true → Defina APENAS quando o cliente disser \"sim\" / \"confirmo\" / \"pode agendar\". O array \"agendamentos\" deve conter os objetos de todos os serviços confirmados.\n- \"confirmado_pelo_cliente\": false → Em todos os outros casos."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        8992,
+        3216
+      ],
+      "id": "6ecbcbbb-a684-40e3-9b53-c6d63092f788",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Triagem variáveis').first().json.key }}",
+        "contextWindowLength": 40
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        9088,
+        3440
+      ],
+      "id": "0355629f-da6b-40ea-b45c-86a585774411",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        8992,
+        3440
+      ],
+      "id": "e846900d-8333-42f3-8b8a-b222e16d4678",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Ns6rcuqBovy67TNz",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"message_type\"] }}",
+                    "rightValue": "conversation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f519c1ff-61ca-48d4-9d5e-40825cc4f054"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "conversation"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c58148f3-69d8-41bd-97d1-09b700ebb049",
+                    "leftValue": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"message_type\"] }}",
+                    "rightValue": "ephemeralMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ephemeralMessage"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "58630d31-fa0a-4784-9686-e2df4055d26d",
+                    "leftValue": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"message_type\"] }}",
+                    "rightValue": "extendedTextMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "extendedTextMessage"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a4309649-457e-4392-878a-e06b40eb7f12",
+                    "leftValue": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"message_type\"] }}",
+                    "rightValue": "audioMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "98192012-e1fe-488c-9e56-8a5330a3ad83",
+                    "leftValue": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"message_type\"] }}",
+                    "rightValue": "imageMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "imageMessage"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7c056cfa-4e3a-4189-b56d-905f94e1e13b",
+                    "leftValue": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"message_type\"] }}",
+                    "rightValue": "stickerMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "stickerMessage"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6375f735-cb84-48e3-8aa0-3568ee1ca04d",
+                    "leftValue": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"message_type\"] }}",
+                    "rightValue": "videoMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "videoMessage"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        6928,
+        2752
+      ],
+      "id": "dcb094b6-839a-4380-b4ce-db58bff27b05",
+      "name": "msg_type"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f2725dde-8afb-4122-8432-d7fe2e846a6a",
+              "name": "message",
+              "value": "={{ $json.body.data.message.extendedTextMessage.text || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        7376,
+        2992
+      ],
+      "id": "a6795b83-0d98-4d5a-a3c5-275386772493",
+      "name": "msg-extended"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "40ebd14a-d76d-4e5c-8466-6e243e1ef81e",
+              "leftValue": "={{ $json.message.last() }}",
+              "rightValue": "={{ $('identifica mensagem para o buffer').item.json.message }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        8048,
+        2976
+      ],
+      "id": "5741f673-23d0-406c-92d6-81d5d307d7d8",
+      "name": "Filtrar ultima mensagem"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "=buffer:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"numero\"] }}",
+        "messageData": "={{ $json.message }}",
+        "tail": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        8048,
+        2768
+      ],
+      "id": "555ea460-2e3b-43a9-bf0c-9531fde32069",
+      "name": "identifica mensagem para o buffer",
+      "credentials": {
+        "redis": {
+          "id": "fSJwHbfVtfAiTG8K",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        8224,
+        2768
+      ],
+      "id": "fafc04a3-f267-4919-8d0d-5fdb99d08fce",
+      "name": "aguarda todas mensagens",
+      "webhookId": "18f6cce6-4680-4ae6-a9c5-a0f7c8e05ab7"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "message",
+        "key": "=buffer:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"numero\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        8384,
+        2768
+      ],
+      "id": "cd82fc77-c412-4f3c-975c-b3bcdb7361bc",
+      "name": "envia as mensagens",
+      "credentials": {
+        "redis": {
+          "id": "fSJwHbfVtfAiTG8K",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=buffer:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"numero\"] }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        8224,
+        2976
+      ],
+      "id": "7fa8a0a6-1540-439d-bdc5-0308d0f52aec",
+      "name": "deleta o buffer",
+      "credentials": {
+        "redis": {
+          "id": "fSJwHbfVtfAiTG8K",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Coleta todas as mensagens, tratando tanto string direta quanto array\nconst mensagens = $input.all().flatMap(item => {\n  const msg = item.json.message || item.json.mensagem || item.json.value;\n  return Array.isArray(msg) ? msg : [msg];\n}).filter(Boolean);\n\n// Une todas as mensagens separadas por quebra de linha\nconst textoCompleto = mensagens.join('\\n');\n\nreturn [{\n  json: {\n    ...$json,\n    mensagem_completa: textoCompleto\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8384,
+        2976
+      ],
+      "id": "4f27123c-b599-4ef5-bb75-8f2f1628da12",
+      "name": "Junta mensagens para enviar pro agente"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"server_url\"] }}message/sendText/{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"apikey\"] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Triagem variáveis').first().json.numero }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensagem_fragmentada || $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        10544,
+        3616
+      ],
+      "id": "8b2c3950-a859-494b-b7ed-e73f7d5a4c16",
+      "name": "envia mensagem do agente"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        10288,
+        2800
+      ],
+      "id": "2fc1ad49-b402-47f4-82f8-c5db7d6558b2",
+      "name": "final"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        10048,
+        2976
+      ],
+      "id": "5dc3de03-914e-490b-9473-5fac4b98647d",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "let textoCompleto = $json.resposta_limpa || $json.output || $json.text || \"\";\n\nif (!textoCompleto || !textoCompleto.trim()) {\n  textoCompleto = \"Agendamento confirmado com sucesso! 🎉 Te esperamos no Studio V.\";\n}\n\n// 1. Normaliza quebras de linha\ntextoCompleto = textoCompleto.replace(/\\r\\n/g, '\\n').trim();\n\n// 2. Colapsa linhas em branco duplas entre cabeçalhos de lista e itens (: \\n\\n *)\ntextoCompleto = textoCompleto.replace(/(:\\s*)\\n\\s*\\n+/g, '$1\\n');\n\n// 3. Colapsa linhas em branco duplas entre itens de lista (*, -, •, números, horários)\n// Isso impede que cada serviço ou horário vire uma mensagem separada no WhatsApp!\ntextoCompleto = textoCompleto.replace(/\\n\\s*\\n+(?=[ \\t]*[*•\\-\\d])/g, '\\n');\ntextoCompleto = textoCompleto.replace(/\\n\\s*\\n+(?=[ \\t]*\\d{1,2}:\\d{2})/g, '\\n');\n\n// 4. Divide os blocos apenas por quebras duplas reais de parágrafo\nlet blocos = textoCompleto\n  .split(/\\n\\s*\\n+/)\n  .map(msg => msg.trim())\n  .filter(msg => msg.length > 0);\n\n// 5. Limite de segurança: no máximo 2 a 3 mensagens por resposta para não picotar no WhatsApp\nif (blocos.length > 3) {\n  const primeiros = blocos.slice(0, 2);\n  const restante = blocos.slice(2).join('\\n\\n');\n  blocos = [...primeiros, restante];\n}\n\nreturn blocos.map(msg => ({ json: { mensagem_fragmentada: msg } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9808,
+        2976
+      ],
+      "id": "675465bb-9962-4837-9aa0-48ebdeb13b2b",
+      "name": "divide a mensagem em blocos"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "280695c8-af26-45b7-8fc8-4e211161645c",
+              "name": "base64",
+              "value": "={{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"base64\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        7376,
+        3216
+      ],
+      "id": "24dbf69d-b783-4599-8004-6aeafb73835f",
+      "name": "pega o base64"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "options": {
+          "fileName": "audio.mp3",
+          "mimeType": "audio/mpeg"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        7584,
+        3216
+      ],
+      "id": "f091021e-59fa-41e9-b2a2-56a67540be9e",
+      "name": "converte do base64 para mp3"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        7840,
+        3216
+      ],
+      "id": "3e4edc92-ed4a-44b9-9e0c-9f6a8ac361dc",
+      "name": "transcreve o audio",
+      "credentials": {
+        "openAiApi": {
+          "id": "Ns6rcuqBovy67TNz",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "80f4fe8b-6a9d-4270-a858-876c025222fe",
+              "name": "message",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        8064,
+        3216
+      ],
+      "id": "71f6643d-57ca-48bc-a784-e755b28674ed",
+      "name": "mensagem convertida"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        10752,
+        3616
+      ],
+      "id": "cf43beaf-b108-4761-8a0c-5893f4aac5d6",
+      "name": "Wait",
+      "webhookId": "6779de2c-acd5-4160-bdb3-21f9e76fddac"
+    },
+    {
+      "parameters": {
+        "description": "Use SOMENTE para alterar a data/hora de um agendamento que JÁ EXISTE. NUNCA use para criar novos agendamentos!",
+        "workflowId": {
+          "__rl": true,
+          "value": "R7JxyEG1x8trVZBv",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/R7JxyEG1x8trVZBv",
+          "cachedResultName": "Atualizar Agendamento — Tool"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event_id": "={{ $fromAI('event_id', 'ID exato do evento retornado pela busca de eventos', 'string') }}",
+            "start_iso": "={{ $fromAI('start_iso', 'Nova data e hora de inicio em ISO 8601 com fuso horários', 'string') }}",
+            "end_iso": "={{ $fromAI('end_iso', 'Nova data e hora de termino em ISO 8601 com fuso horários', 'string') }}",
+            "google_calendar_id": "={{ $('formatar dados estabelecimento').first().json.google_calendar_id }}",
+            "google_access_token": "={{ $('formatar dados estabelecimento').first().json.google_access_token }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "event_id",
+              "displayName": "event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "start_iso",
+              "displayName": "start_iso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "end_iso",
+              "displayName": "end_iso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_calendar_id",
+              "displayName": "google_calendar_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_access_token",
+              "displayName": "google_access_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        9184,
+        3744
+      ],
+      "id": "b63e7367-974c-44b9-9099-0c0ff38c63ff",
+      "name": "atualizar_agendamento"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Cf6xnGXbReFedkPJ",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Cf6xnGXbReFedkPJ",
+          "cachedResultName": "Cancelar Agendamento — Tool"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event_id": "={{ $fromAI('event_id', 'ID exato do evento retornado pela busca de eventos', 'string') }}",
+            "google_calendar_id": "={{ $('formatar dados estabelecimento').first().json.google_calendar_id }}",
+            "google_access_token": "={{ $('formatar dados estabelecimento').first().json.google_access_token }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "event_id",
+              "displayName": "event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_calendar_id",
+              "displayName": "google_calendar_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_access_token",
+              "displayName": "google_access_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        9360,
+        3744
+      ],
+      "id": "f0addd63-5bbc-471e-b97a-efd65d5fff50",
+      "name": "cancelar_agendamento"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT nome, categoria, descricao, duracao_minutos, tipo_precificacao, valor_fixo, valor_base, observacao_valor\n   FROM servicos\n   WHERE instancia = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}' AND ativo = TRUE\n   ORDER BY categoria, nome;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        5920,
+        2912
+      ],
+      "id": "f5d0390b-c036-461b-9ee9-e4fe79d7e9f7",
+      "name": "buscar serviços",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM estabelecimentos WHERE instancia = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}' AND ativo = TRUE LIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        6192,
+        2656
+      ],
+      "id": "dd99cc95-ec9f-4904-8ef1-7962f59c8353",
+      "name": "buscar estabelecimento",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oauth2.googleapis.com/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "refresh_token"
+            },
+            {
+              "name": "client_id",
+              "value": "SEU_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+            },
+            {
+              "name": "client_secret",
+              "value": "SEU_GOOGLE_CLIENT_SECRET"
+            },
+            {
+              "name": "refresh_token",
+              "value": "={{ $json.google_refresh_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6400,
+        2656
+      ],
+      "id": "dc9420a9-4084-4ef6-8dcd-e727027ea51b",
+      "name": "Renovar Token Google",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $('buscar estabelecimento').first().json;\nconst tokenRes = $('Renovar Token Google').first()?.json || {};\nconst accessToken = tokenRes.access_token || e.google_access_token;\n\nlet horariosPorDiaTxt = '';\nif (e.horarios_por_dia) {\n  let hMap = e.horarios_por_dia;\n  if (typeof hMap === 'string') {\n    try { hMap = JSON.parse(hMap); } catch(err) {}\n  }\n  if (typeof hMap === 'object') {\n    horariosPorDiaTxt = '\\nHorários específicos por dia: ' + JSON.stringify(hMap);\n  }\n}\n\nconst texto = `Nome do agente: ${e.nome_agente}\nEstabelecimento: ${e.nome_estabelecimento}\nTipo: ${e.tipo_estabelecimento}\nProfissional responsável: ${e.nome_profissional || 'não informado'}\nEspecialidade: ${e.especialidade || 'não informado'}\nEndereço: ${e.endereco || 'não informado'}\nFormas de pagamento: ${e.forma_pagamento || 'não informado'}\nDias de atendimento: ${e.dias_atendimento}\nTurno da manhã: ${e.turno_manha_inicio} às ${e.turno_manha_fim}\nTurno da tarde: ${e.turno_tarde_inicio} às ${e.turno_tarde_fim}${horariosPorDiaTxt}\nObservações: ${e.observacoes_adicionais || 'nenhuma'}`;\n\nreturn [{ json: {\n  dados_estabelecimento: texto,\n  telefone_atendente: e.telefone_atendente,\n  dias_atendimento: e.dias_atendimento,\n  datas_bloqueadas: e.datas_bloqueadas,\n  turno_manha_inicio: e.turno_manha_inicio,\n  turno_manha_fim: e.turno_manha_fim,\n  turno_tarde_inicio: e.turno_tarde_inicio,\n  turno_tarde_fim: e.turno_tarde_fim,\n  horarios_por_dia: e.horarios_por_dia,\n  google_calendar_id: e.google_calendar_id,\n  google_access_token: accessToken,\n  google_refresh_token: e.google_refresh_token\n} }];\n\nconst agoraSP = new Date();\nconst formatterSP = new Intl.DateTimeFormat('pt-BR', {\n  timeZone: 'America/Sao_Paulo',\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric',\n  weekday: 'long',\n  hour: '2-digit',\n  minute: '2-digit'\n});\nconst dataHoraFormatada = formatterSP.format(agoraSP);\n// Injeta diretamente: \"Data e hora oficial de hoje: quarta-feira, 09/09/2026, 12:34 (Horário de Brasília)\""
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6608,
+        2656
+      ],
+      "id": "97c067dd-aaf3-4679-a2fc-e2cdcdad1cb1",
+      "name": "formatar dados estabelecimento"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(item => item.json);\n\nconst lista = rows.map(s => {\n  if (s.tipo_precificacao === 'fixo') {\n    return `• ${s.nome} (${s.duracao_minutos}min, R$ ${s.valor_fixo})`;\n  } else {\n    return `• ${s.nome} (a partir de R$ ${s.valor_base}, ${s.observacao_valor || 'varia conforme avaliação'})`;\n  }\n}).join('\\n');\n\nconst detalhes = rows.map(s => {\n  return `- ${s.nome}: ${s.descricao || 'Sem descrição cadastrada.'}`;\n}).join('\\n');\n\nreturn [{ json: { lista_servicos: lista, detalhes_servicos: detalhes } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6144,
+        2912
+      ],
+      "id": "df4249e5-04be-446e-895a-daaef7fe0667",
+      "name": "formatar dados serviços"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=bot_echo:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"numero\"] }}",
+        "value": "1",
+        "expire": true,
+        "ttl": 8
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        10288,
+        3088
+      ],
+      "id": "27037da7-1708-4a6d-a457-606e5f52ecaf",
+      "name": "Redis",
+      "credentials": {
+        "redis": {
+          "id": "fSJwHbfVtfAiTG8K",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "foi_bot",
+        "key": "=bot_echo:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}:{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"numero\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        6176,
+        2528
+      ],
+      "id": "0d487a26-b546-411c-92d8-e1953693e2f2",
+      "name": "Redis1",
+      "credentials": {
+        "redis": {
+          "id": "fSJwHbfVtfAiTG8K",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "25931682-11b1-4b1a-83b9-7f67f22a286a",
+              "leftValue": "={{ $item(\"0\").$node[\"Redis1\"].json[\"foi_bot\"] }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        6288,
+        2304
+      ],
+      "id": "b2c977ca-a57b-40c3-84a5-3bcc482a8ece",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        5968,
+        2448
+      ],
+      "id": "e267a0d1-b28e-4f99-b6f9-0bdc96e6942f",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.leads (instance_name, nome, numero, data_criacao)\nVALUES (\n  '{{ $json.instancia }}',\n  '{{ $json.nome_pessoa }}',\n  '{{ $json.numero }}',\n  '{{ $now.setZone('America/Sao_Paulo').format('yyyy-MM-dd HH:mm:ss') }}'\n)\nON CONFLICT (instance_name, numero) DO NOTHING;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        5680,
+        2384
+      ],
+      "id": "96cda9d4-f7d6-4ace-8ba0-d4b8818863bd",
+      "name": "Cria lead novo na tabela se não existir",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6a30deab-728c-48ba-9d9c-f6f3b28b8fd4",
+              "leftValue": "={{ $item(\"0\").$node[\"verificar atendimento humano\"].json[\"atendimento_humano\"] }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5680,
+        2624
+      ],
+      "id": "d7c5c0d1-8299-41e2-966e-59249f61960e",
+      "name": "atendimento é humano?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET atendimento_humano = TRUE, atendimento_pausado_em = NOW()\nWHERE instance_name = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}'\n  AND numero = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"numero\"] }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        6528,
+        2320
+      ],
+      "id": "f6f42a8c-c145-4ac3-9c91-9198ec3b8649",
+      "name": "atendimento humano = true",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9c053c48-c7d6-49ec-8597-9d635e2c4451",
+              "name": "message",
+              "value": "={{ $json.mensagem_completa || $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        8624,
+        3216
+      ],
+      "id": "a27cc0e7-56c5-4d50-adc9-f823a7290160",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM n8n_chat_histories \nWHERE session_id LIKE '%5511999999999%';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        5808,
+        2096
+      ],
+      "id": "5c4256f8-1e74-49be-baf2-f5df62d28eb4",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET atendimento_humano = FALSE\nWHERE instance_name = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}'\n  AND numero = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"numero\"] }}'\n  AND atendimento_humano = TRUE\n  AND atendimento_pausado_em <= NOW() - INTERVAL '4 hours';\n\nSELECT atendimento_humano FROM leads\nWHERE instance_name = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"instancia\"] }}'\n  AND numero = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"numero\"] }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        5456,
+        2624
+      ],
+      "id": "9676ba28-6498-47f9-ab76-200778422631",
+      "name": "verificar atendimento humano",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) AS total_anterior \nFROM n8n_chat_histories \nWHERE session_id = '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"key\"] }}';",
+        "options": {}
+      },
+      "id": "c65655c4-651d-4187-bf62-b716ebf91793",
+      "name": "verificar primeiro contato",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        6368,
+        2912
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO estabelecimentos (instancia, nome_agente, nome_estabelecimento, tipo_estabelecimento, nome_profissional, especialidade, endereco, telefone_atendente, forma_pagamento, horario_funcionamento, observacoes_adicionais, google_calendar_id, google_access_token, google_refresh_token)\nVALUES (\n  'iagoteste', 'Lucia', 'Salão Do Cabelo', 'salão de cabelereiro', 'Felipe Stab',\n  'Cortes de cabelo e barba', 'Rua das Flores, 223 - Centro', '5511777777777',\n  'Pix, cartão de crédito e débito', 'Segunda a sexta, 08h às 11h e 13h às 18h',\n  'Salão mais top da região', 'seu_email@dominio.com', 'seu_access_token', 'seu_refresh_token'\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        4608,
+        2864
+      ],
+      "id": "b74357d3-1f28-40e4-9613-9cfc9021a9f4",
+      "name": "inserir estabelecimento",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO servicos (instancia, nome, categoria, descricao, duracao_minutos, tipo_precificacao, valor_fixo)\nVALUES ('iagoteste', 'Corte feminino', 'cabelo', 'Corte com lavagem e finalização', 60, 'fixo', 80.00), ('iagoteste', 'Corte masculino', 'cabelo', 'Corte na tesoura ou máquina', 30, 'fixo', 45.00);\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        4608,
+        2704
+      ],
+      "id": "946598fc-8d0a-4bff-a44d-b2d29704a762",
+      "name": "inserir serviços",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $json.output || $json.text || \"\";\n\n// Extrai o bloco <ESTADO>...</ESTADO>\nconst estadoMatch = output.match(/<ESTADO>([\\s\\S]*?)<\\/ESTADO>/);\nlet estado = {\n  acao: \"conversa\",\n  agendamentos: [],\n  confirmado_pelo_cliente: false\n};\n\nif (estadoMatch) {\n  try {\n    estado = JSON.parse(estadoMatch[1].trim());\n  } catch(e) {\n    estado.confirmado_pelo_cliente = false;\n  }\n}\n\n// Respeita estritamente o booleano emitido pela IA no JSON\nestado.confirmado_pelo_cliente = estado.confirmado_pelo_cliente === true;\n\n// Remove o bloco <ESTADO> da resposta visível ao cliente\nlet resposta = output.replace(/<ESTADO>[\\s\\S]*?<\\/ESTADO>/, '').trim();\n\n// FILTRO INTELIGENTE E SEGURO (COM ÂNCORAS DE AGENDAMENTO)\nconst linhas = resposta.split('\\n');\nconst temAgendamentoNoTexto = linhas.some(l => {\n  const txt = l.toLowerCase();\n  return txt.includes('horário') || txt.includes('horario') || txt.includes('disponív') || txt.includes('agend') || txt.includes('confirm');\n});\n\nif (temAgendamentoNoTexto) {\n  const linhasValidas = linhas.filter(linha => {\n    const l = linha.toLowerCase().trim();\n    if (!l) return false;\n    \n    // ÂNCORA DE SEGURANÇA: Se a frase tem hora (15:00), data (15/09) ou termos de agendamento, ELA É 100% PRESERVADA!\n    const eFraseLegitimaAgendamento = /\\d{1,2}:\\d{2}/.test(l) || \n                                       /\\d{1,2}\\/\\d{1,2}/.test(l) || \n                                       l.includes('agend') || \n                                       l.includes('disponív') || \n                                       l.includes('confirm') || \n                                       l.includes('horário') || \n                                       l.includes('horario') ||\n                                       l.includes('serviço') ||\n                                       l.includes('servico');\n\n    if (eFraseLegitimaAgendamento) {\n      return true; // NUNCA deleta frases reais do salão!\n    }\n    \n    // Se a frase NÃO tem nenhum elemento de agendamento:\n    // Se for conta matemática (ex: \"159 + 159 é 318\") ou frase solta fora do escopo, descarta!\n    if (/\\d+\\s*[\\+\\-\\*\\/\\=]\\s*\\d+/.test(l)) return false;\n    if (l.includes('escopo') || l.includes('não posso responder') || l.includes('não fazem parte')) return false;\n    \n    return true;\n  });\n\n  if (linhasValidas.length > 0) {\n    resposta = linhasValidas.join('\\n\\n').trim();\n  }\n}\n\nreturn [{\n  json: {\n    ...$json,\n    resposta_limpa: resposta,\n    estado: estado\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9248,
+        3216
+      ],
+      "id": "f009a7e5-4c4f-4dff-98f7-e6ba734e4381",
+      "name": "Extrai estado do agente"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fcp1-0001-0002-0003-000400050006",
+              "leftValue": "={{ Boolean($json.estado?.confirmado_pelo_cliente === true && $json.estado?.acao !== 'cancelar' && $json.estado?.acao !== 'remarcar').toBoolean() }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        9456,
+        3216
+      ],
+      "id": "0cea07ae-988b-4fe7-a969-e7fea2107990",
+      "name": "Foi confirmado pelo cliente?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const estado = $json.estado || {};\nconst outputText = $json.resposta_limpa || $json.output || '';\nconst triagem = $('Triagem variáveis').first().json;\nconst estab = $('formatar dados estabelecimento').first().json;\n\n// Carrega os serviços do banco para consulta de duração oficial\nlet servicosBanco = [];\ntry {\n  servicosBanco = $('buscar serviços').all().map(item => item.json);\n} catch(err) {}\n\nlet lista = [];\n\n// 1. Array 'agendamentos' no JSON do estado\nif (Array.isArray(estado.agendamentos) && estado.agendamentos.length > 0) {\n  lista = estado.agendamentos.filter(a => a && (a.servico || a.data_hora_inicio || a.horario));\n}\n\n// 2. Objeto único na raiz do JSON do estado\nif (lista.length === 0 && (estado.servico || estado.data_hora_inicio || estado.horario)) {\n  lista = [{\n    servico: estado.servico,\n    duracao_minutos: estado.duracao_minutos,\n    data: estado.data,\n    horario: estado.horario,\n    data_hora_inicio: estado.data_hora_inicio,\n    nome_cliente: estado.nome_cliente\n  }];\n}\n\n// 3. Fallback por Texto se a IA omitiu o JSON ao confirmar\nif (lista.length === 0 && estado.confirmado_pelo_cliente) {\n  for (const s of servicosBanco) {\n    const regexNome = new RegExp(s.nome.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i');\n    if (regexNome.test(outputText)) {\n      const dateMatch = outputText.match(/(\\d{2}\\/\\d{2}\\/\\d{4}|\\d{4}-\\d{2}-\\d{2})/);\n      const timeMatch = outputText.match(/(\\d{1,2}:\\d{2})/);\n      let dataIso = '';\n      if (dateMatch && timeMatch) {\n        let dStr = dateMatch[1];\n        if (dStr.includes('/')) {\n          const [d, m, y] = dStr.split('/');\n          dStr = `${y}-${m}-${d}`;\n        }\n        const hStr = timeMatch[1].padStart(5, '0');\n        dataIso = `${dStr}T${hStr}:00-03:00`;\n      }\n      if (dataIso) {\n        lista.push({\n          servico: s.nome,\n          duracao_minutos: s.duracao_minutos,\n          data_hora_inicio: dataIso,\n          nome_cliente: estado.nome_cliente || triagem.nome_pessoa\n        });\n      }\n    }\n  }\n}\n\nreturn lista.map(item => {\n  const nomeProc = (item.servico || estado.servico || '').trim();\n  \n  // Duração oficial pelo banco de dados Postgres\n  let duracao = Number(item.duracao_minutos || estado.duracao_minutos || 0);\n  if (!duracao || isNaN(duracao)) {\n    const servEncontrado = servicosBanco.find(s => \n      s.nome.toLowerCase().includes(nomeProc.toLowerCase()) || \n      nomeProc.toLowerCase().includes(s.nome.toLowerCase())\n    );\n    duracao = servEncontrado ? Number(servEncontrado.duracao_minutos) : 30;\n  }\n  if (!duracao || isNaN(duracao)) duracao = 30;\n\n  // Formatação ISO 8601 determinística em código\n  let dhInicio = String(item.data_hora_inicio || estado.data_hora_inicio || '').trim();\n  if (!dhInicio && (item.data || estado.data) && (item.horario || estado.horario)) {\n    let dStr = String(item.data || estado.data).trim();\n    if (dStr.includes('/')) {\n      const [d, m, y] = dStr.split('/');\n      dStr = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;\n    }\n    let hStr = String(item.horario || estado.horario).trim();\n    if (hStr.length === 4 && !hStr.includes(':')) hStr = `${hStr.substring(0,2)}:${hStr.substring(2,4)}`;\n    hStr = hStr.padStart(5, '0');\n    dhInicio = `${dStr}T${hStr}:00-03:00`;\n  }\n\n  return {\n    json: {\n      nome_cliente: item.nome_cliente || estado.nome_cliente || triagem.nome_pessoa || 'Cliente',\n      procedimento: nomeProc,\n      data_hora_inicio: dhInicio,\n      duracao_minutos: duracao,\n      telefone_cliente: triagem.numero,\n      turno_manha_inicio: estab.turno_manha_inicio,\n      turno_manha_fim: estab.turno_manha_fim,\n      turno_tarde_inicio: estab.turno_tarde_inicio,\n      turno_tarde_fim: estab.turno_tarde_fim,\n      horarios_por_dia: estab.horarios_por_dia,\n      datas_bloqueadas: estab.datas_bloqueadas,\n      instancia: triagem.instancia,\n      google_calendar_id: estab.google_calendar_id,\n      google_access_token: estab.google_access_token,\n      google_refresh_token: estab.google_refresh_token\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9568,
+        3472
+      ],
+      "id": "d4c53513-df3e-4d0d-9242-49c37d20dd01",
+      "name": "Prepara dados agendamento"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        9744,
+        3472
+      ],
+      "id": "7101bb81-9e18-4670-939f-2e78c1d3bea9",
+      "name": "Loop Agendamentos"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "adaNEB6zIJfNY7n1",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/adaNEB6zIJfNY7n1",
+          "cachedResultName": "Criar Agendamento — Validado (Tool)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "duracao_minutos": "={{ $json[\"duracao_minutos\"] }}",
+            "telefone_cliente": "={{ $json[\"telefone_cliente\"] }}",
+            "data_hora_inicio": "={{ $json[\"data_hora_inicio\"] }}",
+            "nome_cliente": "={{ $json[\"nome_cliente\"] }}",
+            "procedimento": "={{ $json[\"procedimento\"] }}",
+            "turno_manha_inicio": "={{ $json[\"turno_manha_inicio\"] }}",
+            "turno_manha_fim": "={{ $json[\"turno_manha_fim\"] }}",
+            "turno_tarde_inicio": "={{ $json[\"turno_tarde_inicio\"] }}",
+            "turno_tarde_fim": "={{ $json[\"turno_tarde_fim\"] }}",
+            "horarios_por_dia": "={{ $json[\"horarios_por_dia\"] }}",
+            "datas_bloqueadas": "={{ $json[\"datas_bloqueadas\"] }}",
+            "google_calendar_id": "={{ $json[\"google_calendar_id\"] }}",
+            "google_access_token": "={{ $json[\"google_access_token\"] }}",
+            "google_refresh_token": "={{ $json[\"google_refresh_token\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nome_cliente",
+              "displayName": "nome_cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "procedimento",
+              "displayName": "procedimento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_hora_inicio",
+              "displayName": "data_hora_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "duracao_minutos",
+              "displayName": "duracao_minutos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "telefone_cliente",
+              "displayName": "telefone_cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "turno_manha_inicio",
+              "displayName": "turno_manha_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "turno_manha_fim",
+              "displayName": "turno_manha_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "turno_tarde_inicio",
+              "displayName": "turno_tarde_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "turno_tarde_fim",
+              "displayName": "turno_tarde_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_calendar_id",
+              "displayName": "google_calendar_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_access_token",
+              "displayName": "google_access_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_refresh_token",
+              "displayName": "google_refresh_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        9936,
+        3472
+      ],
+      "id": "b6fc4ac6-b913-4f1b-8aee-7e57892f890c",
+      "name": "Executar Criação de Agendamento",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Coleta o resultado de cada criação (sucesso ou falha) mantendo a execução do loop ativa\nconst item = $input.first().json;\nconst loopInput = $('Loop Agendamentos').item.json;\n\nreturn [{\n  json: {\n    sucesso: item.sucesso === true || (item.id !== undefined && item.id !== null),\n    procedimento: item.procedimento || loopInput.procedimento,\n    data_hora_inicio: item.data_hora_inicio || loopInput.data_hora_inicio,\n    mensagem_erro: item.mensagem_para_agente || item.mensagem || 'Horário indisponível ou limite atingido.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10112,
+        3472
+      ],
+      "id": "87a6073f-0fc4-4ac7-9d68-74d64bb6b156",
+      "name": "Coletar Resultado do Item"
+    },
+    {
+      "parameters": {
+        "jsCode": "const resultados = $input.all().map(item => item.json);\nconst respostaOriginal = $('Extrai estado do agente').first().json.resposta_limpa;\n\nconst comSucesso = resultados.filter(r => r.sucesso);\nconst comFalha = resultados.filter(r => !r.sucesso);\n\nlet mensagemFinal = \"\";\n\nif (comFalha.length === 0) {\n  // Todos os agendamentos foram criados com sucesso!\n  if (respostaOriginal && respostaOriginal.trim().length > 0) {\n    mensagemFinal = respostaOriginal;\n  } else {\n    // Se a IA gerou apenas o bloco <ESTADO> sem texto falado, constrói a mensagem de confirmação\n    const listaSucessoStr = comSucesso.map(s => {\n      let horaStr = '';\n      if (typeof s.data_hora_inicio === 'string' && s.data_hora_inicio.includes('T')) {\n        horaStr = s.data_hora_inicio.split('T')[1].substring(0, 5);\n      } else {\n        const d = new Date(s.data_hora_inicio);\n        horaStr = isNaN(d.getTime()) ? s.data_hora_inicio : d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });\n      }\n      return `• ${s.procedimento} às ${horaStr}`;\n    }).join('\\n');\n\n    mensagemFinal = `Agendamento confirmado com sucesso! 🎉\\n\\n${listaSucessoStr}\\n\\nTe esperamos no Studio V! Se precisar alterar ou cancelar, estou à disposição.`;\n  }\n} else if (comSucesso.length > 0 && comFalha.length > 0) {\n  const listaSucessoStr = comSucesso.map(s => {\n    let horaStr = '';\n    if (typeof s.data_hora_inicio === 'string' && s.data_hora_inicio.includes('T')) {\n      horaStr = s.data_hora_inicio.split('T')[1].substring(0, 5);\n    } else {\n      const d = new Date(s.data_hora_inicio);\n      horaStr = isNaN(d.getTime()) ? s.data_hora_inicio : d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });\n    }\n    return `• ${s.procedimento} às ${horaStr}`;\n  }).join('\\n');\n\n  const motivoErro = comFalha[0].mensagem_erro;\n  mensagemFinal = `Consegui agendar com sucesso o(s) seguinte(s) horário(s):\\n${listaSucessoStr}\\n\\nPorém, não foi possível agendar o outro horário solicitado pelo seguinte motivo:\\n${motivoErro}`;\n} else {\n  const motivoErro = comFalha[0].mensagem_erro || '';\n  if (motivoErro.includes('ausente') || motivoErro.includes('inválid') || motivoErro.includes('obrigat')) {\n    mensagemFinal = respostaOriginal || \"Para agendar, por favor escolha um serviço e um horário válido.\";\n  } else {\n    mensagemFinal = `Não foi possível registrar o agendamento:\\n${motivoErro}\\n\\nPor favor, escolha outro horário ou verifique seus agendamentos ativos.`;\n  }\n}\n\nreturn [{\n  json: {\n    ...$json,\n    resposta_limpa: mensagemFinal,\n    sucesso: comSucesso.length > 0\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10288,
+        3328
+      ],
+      "id": "585666c9-4c8c-4093-ae59-2bfc1c905ffb",
+      "name": "Processar Resultado do Lote"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO n8n_chat_histories (session_id, message)\nVALUES (\n  '{{ $item(\"0\").$node[\"Triagem variáveis\"].json[\"key\"] }}',\n  '{\"type\":\"ai\",\"data\":{\"content\":\"[SISTEMA] Processamento de agendamentos concluído. Estado redefinido. Aguardando nova interação do cliente.\",\"additional_kwargs\":{},\"response_metadata\":{}}}'::jsonb\n);\nSELECT 'ok' AS resultado;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        10464,
+        3328
+      ],
+      "id": "62ec1d84-1f91-4429-a3c0-155f20e11f0e",
+      "name": "Injeta confirmação na memória",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "rs1-0001-0002-0003-000400050006",
+              "name": "resposta_limpa",
+              "value": "={{ $('Processar Resultado do Lote').first().json.resposta_limpa }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        10672,
+        3328
+      ],
+      "id": "1b8ceca1-a0b9-4500-a302-15b5edaf003b",
+      "name": "Set resposta sucesso"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "K8Q8IT2rrrdl3paa",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/K8Q8IT2rrrdl3paa",
+          "cachedResultName": "Verificar Disponibilidade — Calculado"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "duracao_minutos": "={{ $fromAI('duracao_minutos', 'Duracao do servico em minutos', 'number') }}",
+            "turno_manha_inicio": "={{ $('formatar dados estabelecimento').first().json.turno_manha_inicio }}",
+            "turno_manha_fim": "={{ $('formatar dados estabelecimento').first().json.turno_manha_fim }}",
+            "turno_tarde_inicio": "={{ $('formatar dados estabelecimento').first().json.turno_tarde_inicio }}",
+            "turno_tarde_fim": "={{ $('formatar dados estabelecimento').first().json.turno_tarde_fim }}",
+            "horarios_por_dia": "={{ $('formatar dados estabelecimento').first().json.horarios_por_dia }}",
+            "dias_atendimento": "={{ $('formatar dados estabelecimento').first().json.dias_atendimento }}",
+            "datas_bloqueadas": "={{ $('formatar dados estabelecimento').first().json.datas_bloqueadas }}",
+            "data": "={{ $fromAI('data', 'Data no formato YYYY-MM-DD, ou amanha, ou proximo', 'string') }}",
+            "google_calendar_id": "={{ $('formatar dados estabelecimento').first().json.google_calendar_id }}",
+            "google_access_token": "={{ $('formatar dados estabelecimento').first().json.google_access_token }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "duracao_minutos",
+              "displayName": "duracao_minutos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "turno_manha_inicio",
+              "displayName": "turno_manha_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "turno_manha_fim",
+              "displayName": "turno_manha_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "turno_tarde_inicio",
+              "displayName": "turno_tarde_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "turno_tarde_fim",
+              "displayName": "turno_tarde_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "horarios_por_dia",
+              "displayName": "horarios_por_dia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "dias_atendimento",
+              "displayName": "dias_atendimento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "datas_bloqueadas",
+              "displayName": "datas_bloqueadas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_calendar_id",
+              "displayName": "google_calendar_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "google_access_token",
+              "displayName": "google_access_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        9008,
+        3744
+      ],
+      "id": "ba1d320d-c906-42a3-91fb-cb44519dd49a",
+      "name": "horarios_disponiveis"
+    },
+    {
+      "parameters": {
+        "description": "Use SOMENTE quando o cliente pedir para REMARCAR ou CANCELAR",
+        "workflowId": {
+          "__rl": true,
+          "value": "gLpwgtVTCNetNGUO",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/gLpwgtVTCNetNGUO",
+          "cachedResultName": "Buscar Eventos Existentes — Tool"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query', 'Nome do cliente ou termo para buscar agendamento', 'string') }}",
+            "google_calendar_id": "={{ $('formatar dados estabelecimento').first().json.google_calendar_id }}",
+            "google_access_token": "={{ $('formatar dados estabelecimento').first().json.google_access_token }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_calendar_id",
+              "displayName": "google_calendar_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "google_access_token",
+              "displayName": "google_access_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        8832,
+        3744
+      ],
+      "id": "d55c98c4-052a-4ad4-98dc-4b94bbd3fec7",
+      "name": "buscar_eventos_existentes"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- 1. Garante que a coluna JSONB existe\nALTER TABLE public.estabelecimentos ADD COLUMN IF NOT EXISTS horarios_por_dia JSONB;\n\n-- 2. Define horários específicos por dia (Exemplo: Sábado tarde acaba às 17:00 e Domingo fechado)\nUPDATE public.estabelecimentos\nSET horarios_por_dia = '{\n  \"sabado\": {\n    \"manha_inicio\": \"08:00\",\n    \"manha_fim\": \"12:00\",\n    \"tarde_inicio\": \"13:00\",\n    \"tarde_fim\": \"17:00\"\n  },\n  \"domingo\": {\n    \"fechado\": true\n  }\n}'::jsonb\nWHERE instancia = 'iagobacci';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        4608,
+        3072
+      ],
+      "id": "3032c25e-d164-40d6-abde-e9aa3c3c2eba",
+      "name": "SQL Query personalizada",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads \nSET atendimento_humano = FALSE, atendimento_pausado_em = NULL \nWHERE instance_name = 'iagobacci';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        4608,
+        2400
+      ],
+      "id": "a1178d0c-c5e4-478e-bdbf-449c9acf6321",
+      "name": "resetar atendimento humano",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM n8n_chat_histories \nWHERE session_id LIKE '%5511888888888%';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        4608,
+        2544
+      ],
+      "id": "f2ede601-815d-4f3b-b9a8-f1915c9529ba",
+      "name": "deletar historico",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Triagem variáveis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É minha mensagem?": {
+      "main": [
+        [
+          {
+            "node": "buscar estabelecimento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "buscar estabelecimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triagem variáveis": {
+      "main": [
+        [
+          {
+            "node": "Cria lead novo na tabela se não existir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "msg-conversation": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "msg-ephemeral": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "identifica mensagem para o buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Extrai estado do agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrai estado do agente": {
+      "main": [
+        [
+          {
+            "node": "Foi confirmado pelo cliente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Foi confirmado pelo cliente?": {
+      "main": [
+        [
+          {
+            "node": "Prepara dados agendamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "divide a mensagem em blocos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara dados agendamento": {
+      "main": [
+        [
+          {
+            "node": "Loop Agendamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Agendamentos": {
+      "main": [
+        [
+          {
+            "node": "Processar Resultado do Lote",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Executar Criação de Agendamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar Criação de Agendamento": {
+      "main": [
+        [
+          {
+            "node": "Coletar Resultado do Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Coletar Resultado do Item": {
+      "main": [
+        [
+          {
+            "node": "Loop Agendamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar Resultado do Lote": {
+      "main": [
+        [
+          {
+            "node": "Injeta confirmação na memória",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Injeta confirmação na memória": {
+      "main": [
+        [
+          {
+            "node": "Set resposta sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set resposta sucesso": {
+      "main": [
+        [
+          {
+            "node": "divide a mensagem em blocos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "msg_type": {
+      "main": [
+        [
+          {
+            "node": "msg-conversation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "msg-ephemeral",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "msg-extended",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "pega o base64",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "msg_midia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "msg_midia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "msg_midia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "msg-extended": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "msg_midia": {
+      "main": [
+        [
+          {
+            "node": "envia mensagem do agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar ultima mensagem": {
+      "main": [
+        [
+          {
+            "node": "deleta o buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "identifica mensagem para o buffer": {
+      "main": [
+        [
+          {
+            "node": "aguarda todas mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aguarda todas mensagens": {
+      "main": [
+        [
+          {
+            "node": "envia as mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "envia as mensagens": {
+      "main": [
+        [
+          {
+            "node": "Filtrar ultima mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deleta o buffer": {
+      "main": [
+        [
+          {
+            "node": "Junta mensagens para enviar pro agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Junta mensagens para enviar pro agente": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "envia mensagem do agente": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "divide a mensagem em blocos": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pega o base64": {
+      "main": [
+        [
+          {
+            "node": "converte do base64 para mp3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "converte do base64 para mp3": {
+      "main": [
+        [
+          {
+            "node": "transcreve o audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "transcreve o audio": {
+      "main": [
+        [
+          {
+            "node": "mensagem convertida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mensagem convertida": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizar_agendamento": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_agendamento": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar serviços": {
+      "main": [
+        [
+          {
+            "node": "formatar dados serviços",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar estabelecimento": {
+      "main": [
+        [
+          {
+            "node": "Renovar Token Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renovar Token Google": {
+      "main": [
+        [
+          {
+            "node": "formatar dados estabelecimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatar dados estabelecimento": {
+      "main": [
+        [
+          {
+            "node": "buscar serviços",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatar dados serviços": {
+      "main": [
+        [
+          {
+            "node": "verificar primeiro contato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "main": [
+        [
+          {
+            "node": "envia mensagem do agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "atendimento humano = true",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cria lead novo na tabela se não existir": {
+      "main": [
+        [
+          {
+            "node": "verificar atendimento humano",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atendimento é humano?": {
+      "main": [
+        [
+          {
+            "node": "É minha mensagem?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "É minha mensagem?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificar atendimento humano": {
+      "main": [
+        [
+          {
+            "node": "atendimento é humano?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificar primeiro contato": {
+      "main": [
+        [
+          {
+            "node": "msg_type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "horarios_disponiveis": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_eventos_existentes": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "23487564-498f-4ecb-8aac-977ba3cdc46d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2c4b177cdc4ab1739f76e3a541edb38e5f9f65611ee0b153f7b3f0c9546b6ce4"
+  },
+  "nodeGroups": [],
+  "id": "bPSd4DMfpc49OC3C",
+  "tags": [
+    {
+      "updatedAt": "2026-08-28T19:54:55.307Z",
+      "createdAt": "2026-08-28T19:54:55.307Z",
+      "id": "ImrDSYA7Fn6xSikw",
+      "name": "AgendamentoWPP"
+    }
+  ]
+}

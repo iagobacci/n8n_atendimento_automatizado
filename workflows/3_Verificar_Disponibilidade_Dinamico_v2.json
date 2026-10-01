@@ -1,0 +1,137 @@
+{
+  "name": "Verificar Disponibilidade — Calculado",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "data"
+            },
+            {
+              "name": "duracao_minutos"
+            },
+            {
+              "name": "turno_manha_inicio"
+            },
+            {
+              "name": "turno_manha_fim"
+            },
+            {
+              "name": "turno_tarde_inicio"
+            },
+            {
+              "name": "turno_tarde_fim"
+            },
+            {
+              "name": "horarios_por_dia"
+            },
+            {
+              "name": "dias_atendimento"
+            },
+            {
+              "name": "datas_bloqueadas"
+            },
+            {
+              "name": "google_calendar_id"
+            },
+            {
+              "name": "google_access_token"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1712,
+        -192
+      ],
+      "id": "45044771-6e49-4f6e-ba9d-364e069b7741",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($json.google_calendar_id) }}/events?timeMin={{ encodeURIComponent(new Date().toISOString()) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.google_access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1936,
+        -192
+      ],
+      "id": "3982fccb-eab5-4a10-a802-52d9a35816bd",
+      "name": "Get Google Events",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── Cálculo de Horários Disponíveis em Intervalos Compactos (Fuso SP Imune a Servidor) ───\nconst dadosInput = $('When Executed by Another Workflow').first().json;\nconst eventsData = $input.first()?.json || {};\nconst googleEvents = Array.isArray(eventsData.items) ? eventsData.items : [];\n\nconst duracao = Number(dadosInput.duracao_minutos || 30);\nconst dataAlvoStr = (dadosInput.data || '').trim().toLowerCase();\n\nconst formatterSP = new Intl.DateTimeFormat('en-US', {\n  timeZone: 'America/Sao_Paulo',\n  year: 'numeric',\n  month: '2-digit',\n  day: '2-digit',\n  hour: '2-digit',\n  minute: '2-digit',\n  second: '2-digit',\n  hour12: false\n});\n\nfunction getSPParts(dateObj) {\n  const parts = formatterSP.formatToParts(dateObj);\n  const m = {};\n  parts.forEach(p => m[p.type] = p.value);\n  return {\n    ano: Number(m.year),\n    mes: Number(m.month) - 1,\n    dia: Number(m.day),\n    hora: Number(m.hour === '24' ? '0' : m.hour),\n    minuto: Number(m.minute)\n  };\n}\n\nconst agora = new Date();\nconst agoraParts = getSPParts(agora);\n\nlet ano = agoraParts.ano;\nlet mes = agoraParts.mes;\nlet dia = agoraParts.dia;\n\nif (dataAlvoStr === 'amanha' || dataAlvoStr === 'amanhã') {\n  const d = new Date(agoraParts.ano, agoraParts.mes, agoraParts.dia + 1);\n  ano = d.getFullYear();\n  mes = d.getMonth();\n  dia = d.getDate();\n} else if (dataAlvoStr.match(/^\\d{4}-\\d{2}-\\d{2}$/)) {\n  const [y, m, d] = dataAlvoStr.split('-').map(Number);\n  ano = y;\n  mes = m - 1;\n  dia = d;\n} else if (dataAlvoStr.match(/^\\d{2}\\/\\d{2}\\/\\d{4}$/)) {\n  const [d, m, y] = dataAlvoStr.split('/').map(Number);\n  ano = y;\n  mes = m - 1;\n  dia = d;\n}\n\nconst targetDateObj = new Date(ano, mes, dia);\nconst hojeDateObj = new Date(agoraParts.ano, agoraParts.mes, agoraParts.dia);\n\nif (targetDateObj < hojeDateObj) {\n  return [{\n    json: {\n      sucesso: false,\n      mensagem: 'A data solicitada já passou. Por favor, escolha uma data futura.'\n    }\n  }];\n}\n\nconst dataFormatadaStr = `${String(dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}/${ano}`;\nconst isoDateStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;\n\n// 🇧🇷 1. Cálculo Automático de Feriados Nacionais Brasileiros\nfunction getPascoa(y) {\n  const a = y % 19, b = Math.floor(y / 100), c = y % 100;\n  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);\n  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;\n  const i = Math.floor(c / 4), k = c % 4, L = (32 + 2 * e + 2 * i - h - k) % 7;\n  const m = Math.floor((a + 11 * h + 22 * L) / 451);\n  const month = Math.floor((h + L - 7 * m + 114) / 31);\n  const day = ((h + L - 7 * m + 114) % 31) + 1;\n  return new Date(y, month - 1, day);\n}\n\nfunction obterFeriadosBR(y) {\n  const feriados = {};\n  feriados[`${y}-01-01`] = 'Ano Novo (Confraternização Universal)';\n  feriados[`${y}-04-21`] = 'Tiradentes';\n  feriados[`${y}-05-01`] = 'Dia do Trabalho';\n  feriados[`${y}-09-07`] = 'Independência do Brasil';\n  feriados[`${y}-10-12`] = 'Nossa Senhora Aparecida';\n  feriados[`${y}-11-02`] = 'Finados';\n  feriados[`${y}-11-15`] = 'Proclamação da República';\n  feriados[`${y}-11-20`] = 'Dia da Consciência Negra';\n  feriados[`${y}-12-25`] = 'Natal';\n\n  const pascoa = getPascoa(y);\n  const sextaSanta = new Date(pascoa); sextaSanta.setDate(pascoa.getDate() - 2);\n  feriados[`${y}-${String(sextaSanta.getMonth() + 1).padStart(2, '0')}-${String(sextaSanta.getDate()).padStart(2, '0')}`] = 'Sexta-feira Santa';\n\n  const carnavalSeg = new Date(pascoa); carnavalSeg.setDate(pascoa.getDate() - 48);\n  feriados[`${y}-${String(carnavalSeg.getMonth() + 1).padStart(2, '0')}-${String(carnavalSeg.getDate()).padStart(2, '0')}`] = 'Carnaval';\n\n  const carnavalTer = new Date(pascoa); carnavalTer.setDate(pascoa.getDate() - 47);\n  feriados[`${y}-${String(carnavalTer.getMonth() + 1).padStart(2, '0')}-${String(carnavalTer.getDate()).padStart(2, '0')}`] = 'Carnaval';\n\n  const corpus = new Date(pascoa); corpus.setDate(pascoa.getDate() + 60);\n  feriados[`${y}-${String(corpus.getMonth() + 1).padStart(2, '0')}-${String(corpus.getDate()).padStart(2, '0')}`] = 'Corpus Christi';\n\n  return feriados;\n}\n\nconst feriadosAno = obterFeriadosBR(ano);\nif (feriadosAno[isoDateStr]) {\n  const nomeFeriado = feriadosAno[isoDateStr];\n  return [{\n    json: {\n      sucesso: false,\n      mensagem: `O estabelecimento estará fechado no dia ${dataFormatadaStr} por conta do feriado nacional (${nomeFeriado}).`\n    }\n  }];\n}\n\n// 🔒 2. Verificação de Datas Bloqueadas no Cadastro/DB\nconst datasBloqStr = String(dadosInput.datas_bloqueadas || '');\nif (datasBloqStr.includes(isoDateStr) || datasBloqStr.includes(dataFormatadaStr)) {\n  return [{\n    json: {\n      sucesso: false,\n      mensagem: `O estabelecimento estará fechado na data ${dataFormatadaStr} (data bloqueada).`\n    }\n  }];\n}\n\n// 🔒 3. Verificação de Feriados e Eventos no Google Calendar\nconst palavrasChaveBloqueio = ['feriado', 'fechado', 'bloqueado', 'folga', 'recesso', 'independência', 'independencia', 'não atende', 'nao atende', 'sem atendimento'];\n\nconst ehFeriadoOuBloqueadoGC = googleEvents.some(ev => {\n  if (ev.status === 'cancelled') return false;\n  \n  const summary = (ev.summary || '').toLowerCase();\n  const desc = (ev.description || '').toLowerCase();\n  const temPalavraChave = palavrasChaveBloqueio.some(p => summary.includes(p) || desc.includes(p));\n\n  if (ev.start && ev.start.date) {\n    const sDate = ev.start.date;\n    const eDate = ev.end?.date || sDate;\n    if (isoDateStr >= sDate && isoDateStr < eDate) return true;\n    if (sDate === isoDateStr) return true;\n  }\n\n  if (temPalavraChave) {\n    if (ev.start?.dateTime) {\n      const sParts = getSPParts(new Date(ev.start.dateTime));\n      if (sParts.ano === ano && sParts.mes === mes && sParts.dia === dia) {\n        return true;\n      }\n    }\n  }\n\n  return false;\n});\n\nif (ehFeriadoOuBloqueadoGC) {\n  return [{\n    json: {\n      sucesso: false,\n      mensagem: `O estabelecimento estará fechado na data ${dataFormatadaStr} por conta de feriado ou bloqueio na agenda.`\n    }\n  }];\n}\n\nconst isHoje = (ano === agoraParts.ano && mes === agoraParts.mes && dia === agoraParts.dia);\nconst limiteAntecedenciaMinutos = (agoraParts.hora * 60 + agoraParts.minuto) + 30;\n\nfunction hhmmParaMinutos(str) {\n  if (!str) return 0;\n  const [h, m] = String(str).split(':').map(Number);\n  return h * 60 + m;\n}\n\nfunction minutosParaHhmm(min) {\n  const h = Math.floor(min / 60);\n  const m = min % 60;\n  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;\n}\n\nfunction obterHorariosDoDia(diaSem, d) {\n  let hPorDia = d.horarios_por_dia;\n  if (typeof hPorDia === 'string') {\n    try { hPorDia = JSON.parse(hPorDia); } catch(e) {}\n  }\n  \n  const mapaVariantes = {\n    1: ['1', 'segunda', 'segunda-feira', 'segunda_feira'],\n    2: ['2', 'terca', 'terça', 'terca-feira', 'terça-feira', 'terca_feira', 'terça_feira'],\n    3: ['3', 'quarta', 'quarta-feira', 'quarta_feira'],\n    4: ['4', 'quinta', 'quinta-feira', 'quinta_feira'],\n    5: ['5', 'sexta', 'sexta-feira', 'sexta_feira'],\n    6: ['6', 'sabado', 'sábado', 'sabado_feira'],\n    7: ['7', 'domingo']\n  };\n\n  const chavesProcurar = mapaVariantes[diaSem] || [String(diaSem)];\n\n  let configDia = null;\n  if (hPorDia && typeof hPorDia === 'object') {\n    const chavesObjeto = Object.keys(hPorDia);\n    for (const key of chavesObjeto) {\n      const keyNorm = key.trim().toLowerCase();\n      if (chavesProcurar.some(varKey => varKey === keyNorm)) {\n        configDia = hPorDia[key];\n        break;\n      }\n    }\n  }\n  \n  if (configDia === false || (configDia && configDia.fechado === true)) {\n    return { aberto: false };\n  }\n  \n  if (configDia && typeof configDia === 'object') {\n    return {\n      aberto: true,\n      manhaIni: configDia.manha_inicio || configDia.manha?.[0] || d.turno_manha_inicio || '08:00',\n      manhaFim: configDia.manha_fim    || configDia.manha?.[1] || d.turno_manha_fim    || '12:00',\n      tardeIni: configDia.tarde_inicio || configDia.tarde?.[0] || d.turno_tarde_inicio || '13:00',\n      tardeFim: configDia.tarde_fim    || configDia.tarde?.[1] || d.turno_tarde_fim    || '19:00',\n      semManha: configDia.sem_manha === true || configDia.manha === null,\n      semTarde: configDia.sem_tarde === true || configDia.tarde === null\n    };\n  }\n  \n  return {\n    aberto: true,\n    manhaIni: d.turno_manha_inicio || '08:00',\n    manhaFim: d.turno_manha_fim    || '12:00',\n    tardeIni: d.turno_tarde_inicio || '13:00',\n    tardeFim: d.turno_tarde_fim    || '19:00',\n    semManha: false,\n    semTarde: false\n  };\n}\n\nconst dateSPForDay = new Date(Date.UTC(ano, mes, dia, 12, 0, 0));\nlet diaSemana = dateSPForDay.getUTCDay();\nif (diaSemana === 0) diaSemana = 7;\n\nconst horDia = obterHorariosDoDia(diaSemana, dadosInput);\n\nif (!horDia.aberto) {\n  return [{\n    json: {\n      sucesso: false,\n      mensagem: `O estabelecimento não abre neste dia da semana (${dataFormatadaStr}).`\n    }\n  }];\n}\n\nconst manhaIni = hhmmParaMinutos(horDia.manhaIni);\nconst manhaFim = hhmmParaMinutos(horDia.manhaFim);\nconst tardeIni = hhmmParaMinutos(horDia.tardeIni);\nconst tardeFim = hhmmParaMinutos(horDia.tardeFim);\n\nconst ocupados = googleEvents.filter(ev => {\n  if (!ev.start || (!ev.start.dateTime && !ev.start.date)) return false;\n  if (ev.status === 'cancelled') return false;\n\n  const sRaw = new Date(ev.start.dateTime || (ev.start.date + 'T00:00:00-03:00'));\n  const sParts = getSPParts(sRaw);\n  \n  return sParts.ano === ano && sParts.mes === mes && sParts.dia === dia;\n}).map(ev => {\n  const sRaw = new Date(ev.start.dateTime || (ev.start.date + 'T00:00:00-03:00'));\n  const eRaw = new Date(ev.end.dateTime   || (ev.end.date   + 'T23:59:59-03:00'));\n  \n  const sParts = getSPParts(sRaw);\n  const eParts = getSPParts(eRaw);\n  \n  return {\n    iniMin: sParts.hora * 60 + sParts.minuto,\n    fimMin: eParts.hora * 60 + eParts.minuto\n  };\n});\n\nfunction calcularSlotsDaJanela(inicioJanela, fimJanela) {\n  const slots = [];\n  for (let min = inicioJanela; min + duracao <= fimJanela; min += 30) {\n    if (isHoje && min < limiteAntecedenciaMinutos) {\n      continue;\n    }\n    const conflito = ocupados.some(o => min < o.fimMin && (min + duracao) > o.iniMin);\n    if (!conflito) {\n      slots.push(min);\n    }\n  }\n  return slots;\n}\n\nfunction agruparEmTextoIntervalos(minutosArray, inicioJanela, fimJanela) {\n  if (!minutosArray || minutosArray.length === 0) return null;\n  \n  const blocos = [];\n  let iniBloco = minutosArray[0];\n  let fimBloco = minutosArray[0] + duracao;\n  \n  for (let i = 1; i < minutosArray.length; i++) {\n    const minAtual = minutosArray[i];\n    if (minAtual === fimBloco) {\n      fimBloco = minAtual + duracao;\n    } else if (minAtual < fimBloco) {\n      fimBloco = Math.max(fimBloco, minAtual + duracao);\n    } else {\n      blocos.push({ inicio: iniBloco, fim: fimBloco });\n      iniBloco = minAtual;\n      fimBloco = minAtual + duracao;\n    }\n  }\n  blocos.push({ inicio: iniBloco, fim: fimBloco });\n  \n  const textosBlocos = blocos.map(b => `${minutosParaHhmm(b.inicio)} às ${minutosParaHhmm(b.fim)}`);\n  \n  let textoLivre = '';\n  if (textosBlocos.length === 1) {\n    textoLivre = `das ${textosBlocos[0]}`;\n  } else if (textosBlocos.length === 2) {\n    textoLivre = `das ${textosBlocos[0]} e das ${textosBlocos[1]}`;\n  } else {\n    textoLivre = `das ${textosBlocos.slice(0, -1).join(', das ')} e das ${textosBlocos[textosBlocos.length - 1]}`;\n  }\n\n  const ocupadosJanela = ocupados.filter(o => o.fimMin > inicioJanela && o.iniMin < fimJanela);\n  if (ocupadosJanela.length > 0 && blocos.length > 1) {\n    const textosOcupados = ocupadosJanela.map(o => {\n      const ini = Math.max(o.iniMin, inicioJanela);\n      const fim = Math.min(o.fimMin, fimJanela);\n      return `${minutosParaHhmm(ini)} às ${minutosParaHhmm(fim)}`;\n    });\n    return `${textoLivre} (ocupado das ${textosOcupados.join(', ')})`;\n  }\n\n  return textoLivre;\n}\n\nconst slotsManha = !horDia.semManha ? calcularSlotsDaJanela(manhaIni, manhaFim) : [];\nconst slotsTarde = !horDia.semTarde ? calcularSlotsDaJanela(tardeIni, tardeFim) : [];\n\nconst intervalosManhaStr = agruparEmTextoIntervalos(slotsManha, manhaIni, manhaFim);\nconst intervalosTardeStr = agruparEmTextoIntervalos(slotsTarde, tardeIni, tardeFim);\n\nconst todosSlotsMinutos = [...slotsManha, ...slotsTarde];\nconst todosSlotsHHMM = todosSlotsMinutos.map(minutosParaHhmm);\n\nif (todosSlotsMinutos.length === 0) {\n  return [{\n    json: {\n      sucesso: false,\n      mensagem: `Não há horários disponíveis para ${dataFormatadaStr}.`\n    }\n  }];\n}\n\nlet mensagemResumo = `Horários disponíveis para ${dataFormatadaStr}:\\n`;\nif (intervalosManhaStr) {\n  mensagemResumo += `• No período da manhã: ${intervalosManhaStr}\\n`;\n}\nif (intervalosTardeStr) {\n  mensagemResumo += `• No período da tarde: ${intervalosTardeStr}\\n`;\n}\n\nreturn [{\n  json: {\n    sucesso: true,\n    data: dataFormatadaStr,\n    horarios: todosSlotsHHMM,\n    intervalos_manha: intervalosManhaStr || 'Sem horários',\n    intervalos_tarde: intervalosTardeStr || 'Sem horários',\n    mensagem: mensagemResumo.trim()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        -192
+      ],
+      "id": "1bd1808f-3bda-4eb3-bbce-8e676e8a9f99",
+      "name": "Calcular Slots Livres"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get Google Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Google Events": {
+      "main": [
+        [
+          {
+            "node": "Calcular Slots Livres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8f368d25-6618-4a98-827a-6f9792e34bc1",
+  "meta": {
+    "instanceId": "2c4b177cdc4ab1739f76e3a541edb38e5f9f65611ee0b153f7b3f0c9546b6ce4"
+  },
+  "nodeGroups": [],
+  "id": "K8Q8IT2rrrdl3paa",
+  "tags": [
+    {
+      "updatedAt": "2026-08-28T19:54:55.307Z",
+      "createdAt": "2026-08-28T19:54:55.307Z",
+      "id": "ImrDSYA7Fn6xSikw",
+      "name": "AgendamentoWPP"
+    }
+  ]
+}

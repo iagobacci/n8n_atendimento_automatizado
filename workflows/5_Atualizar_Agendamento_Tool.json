@@ -1,0 +1,151 @@
+{
+  "name": "Atualizar Agendamento — Tool",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "event_id"
+            },
+            {
+              "name": "start_iso"
+            },
+            {
+              "name": "end_iso"
+            },
+            {
+              "name": "google_calendar_id"
+            },
+            {
+              "name": "google_access_token"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d794698d-1ff9-4a04-b4cc-52d195006e04",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nlet startIso = item.start_iso || '';\nlet endIso = item.end_iso || '';\nconst duracaoMinutos = Number(item.duracao_minutos) || 30;\n\n// Garante o formato ISO com fuso horários se vier em data simples\nif (startIso && !startIso.includes('T')) {\n  startIso = `${startIso}T00:00:00-03:00`;\n}\n\n// Se o fim não for informado ou for igual ao início, calcula fim = início + duração\nif (!endIso || endIso === startIso) {\n  if (startIso) {\n    const startDate = new Date(startIso);\n    if (!isNaN(startDate.getTime())) {\n      const endDate = new Date(startDate.getTime() + duracaoMinutos * 60000);\n      \n      const tzOffsetMs = -3 * 60 * 60 * 1000; // -03:00\n      const localEnd = new Date(endDate.getTime() + tzOffsetMs);\n      \n      const yyyy = localEnd.getUTCFullYear();\n      const mm = String(localEnd.getUTCMonth() + 1).padStart(2, '0');\n      const dd = String(localEnd.getUTCDate()).padStart(2, '0');\n      const hh = String(localEnd.getUTCHours()).padStart(2, '0');\n      const min = String(localEnd.getUTCMinutes()).padStart(2, '0');\n      \n      endIso = `${yyyy}-${mm}-${dd}T${hh}:${min}:00-03:00`;\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ...item,\n    start_iso: startIso,\n    end_iso: endIso\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        0
+      ],
+      "id": "7ad404c6-c6a8-47eb-a68c-7fe976ad092d",
+      "name": "Tratar Fuso SP"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($json.google_calendar_id) }}/events/{{ encodeURIComponent($json.event_id) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.google_access_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"start\": { \"dateTime\": \"{{ $json.start_iso }}\" },\n  \"end\": { \"dateTime\": \"{{ $json.end_iso }}\" }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        0
+      ],
+      "id": "270bae13-324a-4867-b444-b4637f5bf886",
+      "name": "Atualizar Evento no Google",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const googleResp = $input.first().json;\n\nconst isError = googleResp.error !== undefined || \n                googleResp.statusCode >= 400 || \n                !googleResp.id;\n\nif (isError) {\n  const msgErro = googleResp.error?.message || \n                  googleResp.message || \n                  \"Agendamento não encontrado no Google Calendar ou ID do evento é inválido.\";\n  return [{\n    json: {\n      sucesso: false,\n      mensagem: `Falha ao atualizar no Google Calendar: ${msgErro}`\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    sucesso: true,\n    mensagem: \"Agendamento alterado com sucesso!\",\n    event_id: googleResp.id,\n    start: googleResp.start?.dateTime,\n    end: googleResp.end?.dateTime\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        0
+      ],
+      "id": "c262e811-3801-492d-8e0c-babf162a5c3e",
+      "name": "Formatar Resposta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Tratar Fuso SP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tratar Fuso SP": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Evento no Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Evento no Google": {
+      "main": [
+        [
+          {
+            "node": "Formatar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3c30ec77-7556-47d4-8702-81b3b1022678",
+  "meta": {
+    "instanceId": "2c4b177cdc4ab1739f76e3a541edb38e5f9f65611ee0b153f7b3f0c9546b6ce4"
+  },
+  "nodeGroups": [],
+  "id": "R7JxyEG1x8trVZBv",
+  "tags": [
+    {
+      "updatedAt": "2026-08-28T19:54:55.307Z",
+      "createdAt": "2026-08-28T19:54:55.307Z",
+      "id": "ImrDSYA7Fn6xSikw",
+      "name": "AgendamentoWPP"
+    }
+  ]
+}

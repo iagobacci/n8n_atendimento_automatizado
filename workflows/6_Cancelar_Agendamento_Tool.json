@@ -1,0 +1,115 @@
+{
+  "name": "Cancelar Agendamento — Tool",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "event_id"
+            },
+            {
+              "name": "google_calendar_id"
+            },
+            {
+              "name": "google_access_token"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -16,
+        -176
+      ],
+      "id": "46d69d8a-4ce5-4308-8d0b-6ef659440b67",
+      "name": "When Executed by Another Workflow",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/primary/events/{{ $json.event_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.google_access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        -176
+      ],
+      "id": "87e80266-bbdd-4629-94bf-6d9083bb6cf2",
+      "name": "Deletar Evento no Google",
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first()?.json || {};\n\n// Captura se o n8n recebeu erro HTTP (ex: 404, 403, 401, 500)\nif (item.error || item.message || item.cause || (item.statusCode && item.statusCode >= 400)) {\n  const statusCod = item.statusCode || item.httpCode || 'Erro API';\n  const erroMsg = item.message || item.error || 'Evento não encontrado ou permissão negada.';\n  return [{\n    json: {\n      sucesso: false,\n      erro_detalhado: item,\n      mensagem: `Falha ao deletar evento (${statusCod}): ${erroMsg}`\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    sucesso: true,\n    resposta_google: item,\n    mensagem: 'Agendamento cancelado com sucesso no Google Calendar.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -176
+      ],
+      "id": "ad700be4-8bde-407c-9b59-544c4f56a549",
+      "name": "Formatar Resposta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Deletar Evento no Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deletar Evento no Google": {
+      "main": [
+        [
+          {
+            "node": "Formatar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9e66e69c-f85c-46e3-9625-69a16510ffaa",
+  "meta": {
+    "instanceId": "2c4b177cdc4ab1739f76e3a541edb38e5f9f65611ee0b153f7b3f0c9546b6ce4"
+  },
+  "nodeGroups": [],
+  "id": "Cf6xnGXbReFedkPJ",
+  "tags": [
+    {
+      "updatedAt": "2026-08-28T19:54:55.307Z",
+      "createdAt": "2026-08-28T19:54:55.307Z",
+      "id": "ImrDSYA7Fn6xSikw",
+      "name": "AgendamentoWPP"
+    }
+  ]
+}

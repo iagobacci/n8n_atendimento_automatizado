@@ -1,0 +1,316 @@
+{
+  "name": "Add Evento pro BD e Exclui da Agenda",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "59 23 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        336
+      ],
+      "id": "993571f5-ba8b-4c67-bff2-614e09d92813",
+      "name": "Schedule Trigger (23:59 Diário)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT instancia, google_calendar_id, google_refresh_token FROM estabelecimentos WHERE ativo = TRUE AND google_calendar_id IS NOT NULL AND google_refresh_token IS NOT NULL;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        576,
+        336
+      ],
+      "id": "7fe11d7b-f11a-45cf-8eae-d38ef3296644",
+      "name": "Buscar Estabelecimentos Ativos",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        768,
+        336
+      ],
+      "id": "6c3deaf0-f474-4fb3-be56-21438d33ae2b",
+      "name": "Loop Estabelecimentos"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oauth2.googleapis.com/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "refresh_token"
+            },
+            {
+              "name": "client_id",
+              "value": "SEU_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+            },
+            {
+              "name": "client_secret",
+              "value": "SEU_GOOGLE_CLIENT_SECRET"
+            },
+            {
+              "name": "refresh_token",
+              "value": "={{ $json.google_refresh_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        992,
+        336
+      ],
+      "id": "371df074-8f0d-430c-bad3-7c4086c64b3a",
+      "name": "Renovar Token Google",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($('Loop Estabelecimentos').item.json.google_calendar_id) }}/events",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMax",
+              "value": "={{ $now.setZone('America/Sao_Paulo').toISOString() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1232,
+        336
+      ],
+      "id": "8cf2c991-b379-4e96-acb7-47d6441acaa5",
+      "name": "Buscar Eventos Passados Google Calendar",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first()?.json || {};\nconst estab = $('Loop Estabelecimentos').item?.json || {};\n\n// Pega o token renovado pelo nó 'Renovar Token Google' de forma garantida\nlet accessToken = \"\";\ntry {\n  accessToken = $('Renovar Token Google').item.json.access_token;\n} catch (e) {\n  try {\n    accessToken = $('Renovar Token Google').last().json.access_token;\n  } catch (e2) {\n    accessToken = estab.google_access_token || \"\";\n  }\n}\n\nconst items = res.items || [];\n\n// Filtra apenas agendamentos reais (ignora aniversarios 'birthday', feriados e eventos de sistema)\nconst eventosValidos = items.filter(ev => {\n  if (!ev.id || ev.status === 'cancelled') return false;\n  \n  // Exclui eventos de sistema do Google\n  const eventType = ev.eventType || 'default';\n  if (eventType !== 'default') return false;\n  \n  // Exclui eventos de calendários de feriados automáticos\n  if (ev.organizer && ev.organizer.email && ev.organizer.email.includes('holiday')) return false;\n\n  return true;\n});\n\nreturn eventosValidos.map(ev => ({\n  json: {\n    instancia: estab.instancia,\n    google_calendar_id: estab.google_calendar_id,\n    google_access_token: accessToken,\n    google_event_id: ev.id,\n    summary: ev.summary || 'Agendamento sem nome',\n    description: ev.description || '',\n    start_iso: ev.start?.dateTime || ev.start?.date,\n    end_iso: ev.end?.dateTime || ev.end?.date\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        336
+      ],
+      "id": "92158506-49a8-49de-9d15-6463443d36e8",
+      "name": "Formatar Eventos Passados"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO historico_agendamentos (\n  instancia,\n  google_event_id,\n  summary,\n  description,\n  data_hora_inicio,\n  data_hora_fim\n)\nVALUES (\n  '{{ $json.instancia }}',\n  '{{ $json.google_event_id }}',\n  '{{ $json.summary.replace(/'/g, \"''\") }}',\n  '{{ $json.description.replace(/'/g, \"''\") }}',\n  '{{ $json.start_iso }}',\n  '{{ $json.end_iso }}'\n)\nON CONFLICT (google_event_id) DO NOTHING;\n\nSELECT \n  '{{ $json.google_calendar_id }}' AS google_calendar_id,\n  '{{ $json.google_event_id }}' AS google_event_id,\n  '{{ $json.google_access_token }}' AS google_access_token;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1744,
+        336
+      ],
+      "id": "6b84a85d-63f8-42f8-8d68-1f380691b127",
+      "name": "Salvar no Historico Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "rxQ1ohDpsFHITdyt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ encodeURIComponent($json.google_calendar_id) }}/events/{{ $json.google_event_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.google_access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1968,
+        336
+      ],
+      "id": "c3bd947c-096c-4bfc-97a0-b535e97699f3",
+      "name": "Deletar Evento do Calendar",
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger (23:59 Diário)": {
+      "main": [
+        [
+          {
+            "node": "Buscar Estabelecimentos Ativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Estabelecimentos Ativos": {
+      "main": [
+        [
+          {
+            "node": "Loop Estabelecimentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Estabelecimentos": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Renovar Token Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renovar Token Google": {
+      "main": [
+        [
+          {
+            "node": "Buscar Eventos Passados Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatar Eventos Passados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Eventos Passados Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Formatar Eventos Passados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Eventos Passados": {
+      "main": [
+        [
+          {
+            "node": "Salvar no Historico Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar no Historico Postgres": {
+      "main": [
+        [
+          {
+            "node": "Deletar Evento do Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deletar Evento do Calendar": {
+      "main": [
+        [
+          {
+            "node": "Loop Estabelecimentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5a72b45f-4b85-400b-9e85-0d07ea80b2fd",
+  "meta": {
+    "instanceId": "2c4b177cdc4ab1739f76e3a541edb38e5f9f65611ee0b153f7b3f0c9546b6ce4"
+  },
+  "nodeGroups": [],
+  "id": "z0YdUMyxofePAA0l",
+  "tags": [
+    {
+      "updatedAt": "2026-08-28T19:54:55.307Z",
+      "createdAt": "2026-08-28T19:54:55.307Z",
+      "id": "ImrDSYA7Fn6xSikw",
+      "name": "AgendamentoWPP"
+    }
+  ]
+}
