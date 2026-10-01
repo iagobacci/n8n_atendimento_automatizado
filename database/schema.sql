@@ -1,5 +1,5 @@
 -- =============================================================================
--- ESQUEMA DO BANCO DE DADOS (POSTGRESQL / SUPABASE)
+-- ESQUEMA DO BANCO DE DADOS (POSTGRESQL)
 -- Sistema de Agente de IA para WhatsApp & Agendamento Automático (Bacci Dev)
 -- =============================================================================
 

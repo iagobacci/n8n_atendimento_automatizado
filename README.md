@@ -7,14 +7,14 @@
 ![n8n](https://img.shields.io/badge/n8n-Modular%20Workflows-FF6584?style=for-the-badge&logo=n8n)
 ![WhatsApp](https://img.shields.io/badge/WhatsApp-Evolution%20API-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)
 ![Google Calendar](https://img.shields.io/badge/Google%20Calendar-Sync%20API-4285F4?style=for-the-badge&logo=googlecalendar&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?style=for-the-badge&logo=postgresql&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 ---
 
 ## 🎯 Sobre o Projeto
 
-Este projeto é um ecossistema completo de **agente de inteligência artificial para WhatsApp** com integração nativa ao **Google Agenda** e banco de dados **PostgreSQL / Supabase**.
+Este projeto é um ecossistema completo de **agente de inteligência artificial para WhatsApp** com integração nativa ao **Google Agenda** e banco de dados **PostgreSQL**.
 
 Diferente de chatbots básicos engessados, o sistema opera de forma **100% dinâmica e modular**, suportando múltiplos estabelecimentos (multi-tenant) e utilizando IA para entender linguagem natural, tirar dúvidas sobre serviços e preços, verificar disponibilidade na agenda, criar, atualizar e cancelar agendamentos, além de enviar lembretes automáticos para reduzir o índice de faltas (*no-show*).
 
@@ -38,7 +38,7 @@ flowchart TD
     end
     
     T1 & T2 & T3 & T4 & T5 <-->|Leitura e Gravação| GCal["📆 Google Calendar API"]
-    Bot <-->|Memória e Regras de Negócio| DB[("🗄️ PostgreSQL / Supabase")]
+    Bot <-->|Memória e Regras de Negócio| DB[("🗄️ PostgreSQL Database")]
     
     subgraph Rotinas Automáticas (Background)
         Cron1["⏰ Schedule Diário"] --> R1["📦 7. Arquivar Agendamentos Passados"]
@@ -65,7 +65,7 @@ flowchart TD
 │   ├── 7_Arquivar_Agendamentos_Passados.json        # Rotina: Arquivamento de histórico passado
 │   └── 8_Lembretes_Automaticos_Workflow.json        # Rotina: Lembrete automático 2h antes no WhatsApp
 ├── database/
-│   └── schema.sql                                  # DDL completo das tabelas PostgreSQL/Supabase
+│   └── schema.sql                                  # DDL completo das tabelas PostgreSQL
 ├── docs/
 │   └── midia_kit_bacci_dev.md                      # Mídia Kit comercial da solução
 ├── .env.example                                    # Modelo de variáveis de ambiente
@@ -88,10 +88,10 @@ flowchart TD
 
 ## 🛠️ Como Instalar e Configurar
 
-### 1. Banco de Dados (PostgreSQL / Supabase)
-1. Crie um projeto no [Supabase](https://supabase.com) ou banco PostgreSQL próprio.
-2. Acesse o **SQL Editor**.
-3. Copie e execute o conteúdo do arquivo [`database/schema.sql`](database/schema.sql).
+### 1. Banco de Dados (PostgreSQL)
+1. Conecte-se à sua instância PostgreSQL (Docker, VPS ou servidor de banco de dados).
+2. Abra seu gerenciador de banco (DBeaver, pgAdmin, psql ou interface web).
+3. Execute o script contido em [`database/schema.sql`](database/schema.sql).
 4. As tabelas `estabelecimentos`, `servicos`, `leads`, `lembretes_enviados` e `n8n_chat_histories` serão criadas com todos os índices necessários.
 
 ### 2. Configurar o n8n
