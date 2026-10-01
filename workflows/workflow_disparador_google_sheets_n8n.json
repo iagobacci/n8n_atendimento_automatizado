@@ -1,0 +1,273 @@
+{
+  "name": "Disparador WhatsApp Anti-Ban (Google Sheets - 40/dia)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 9 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "trigger-cron",
+      "name": "Agendamento Diário (Seg-Sex 09:30)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "trigger-manual",
+      "name": "Disparo Manual (Testar Agora)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getRows",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Status Envio",
+              "condition": "equals",
+              "keyValue": "Pendente"
+            }
+          ]
+        },
+        "options": {
+          "limit": 40
+        }
+      },
+      "id": "google-sheets-read",
+      "name": "Ler 40 Pendentes do Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        440,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "loop-contacts",
+      "name": "Loop de 1 em 1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        680,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// LISTA DE SAUDAÇÕES ALEATÓRIAS (Spintax anti-ban)\nconst saudacoes = [\n  \"Olá, tudo bem?\",\n  \"Oi, tudo bem?\",\n  \"Bom dia, tudo bem?\",\n  \"Olá, bom dia, tudo bem?\",\n  \"Olá, bom dia!\",\n  \"Olá, como vai?\",\n  \"Boa tarde, tudo bem?\",\n  \"Oi, boa tarde, tudo bem?\",\n  \"Olá, boa tarde!\",\n  \"Oi, tudo joia por aí?\",\n  \"Olá, tudo joia?\"\n];\n\n// Sorteia uma saudação diferente a cada mensagem\nconst saudacao = saudacoes[Math.floor(Math.random() * saudacoes.length)];\n\n// Pega o nome tratado ou limpa na hora se necessário\nlet nome = $json[\"Nome Tratado (Para Mensagem)\"] || $json[\"Nome do Profissional / Clínica\"] || $json[\"Nome Original\"] || \"\";\n\n// Se ainda tiver slogans ou sufixos longos, limpa automaticamente\nnome = nome.replace(/\\s*[:|–—·/;]\\s*|\\s+-\\s+.*/, '').trim();\nnome = nome.replace(/\\s+(em|no|na)\\s+[A-Za-zÀ-ÖØ-öø-ÿ\\s]+$/, '').trim();\n\n// Monta a mensagem final: \"[Saudação aleatória] [Nome Limpo]?\"\n// Exemplo: \"Olá, tudo bem? Dra. Leticia Matos?\"\nconst mensagem = `${saudacao} ${nome}?`;\n\n// DELAY NÃO-LINEAR ALEATÓRIO: Entre 120s (2 min) e 210s (3m30s)\n// Exemplo: 137s, 194s, 151s, 208s...\nconst delayMinimo = 120;\nconst delayMaximo = 210;\nconst delaySegundos = Math.floor(Math.random() * (delayMaximo - delayMinimo + 1)) + delayMinimo;\n\n// Formata o número para envio (DDI 55 + DDD + 9XXXX-XXXX)\nconst ddd = String($json[\"DDD\"] || \"\").replace(/\\D/g, \"\");\nconst numero = String($json[\"Número\"] || $json[\"WhatsApp Completo\"] || \"\").replace(/\\D/g, \"\");\n\nlet telefoneCompleto = '';\nif (numero.startsWith('55') && numero.length >= 12) {\n  telefoneCompleto = numero;\n} else if (numero.length === 11) {\n  telefoneCompleto = `55${numero}`;\n} else {\n  telefoneCompleto = `55${ddd}${numero}`;\n}\n\nreturn {\n  json: {\n    ...$json,\n    whatsappDestino: telefoneCompleto,\n    mensagemFinal: mensagem,\n    delaySegundosEspera: delaySegundos,\n    delayMinutosFormatado: `${(delaySegundos / 60).toFixed(1)} min`,\n    dataHoraEnvio: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })\n  }\n};"
+      },
+      "id": "generate-message-delay",
+      "name": "Sortear Mensagem & Delay Não-Linear",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution.frostforge.tech/message/sendText/sua_instancia",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUA_API_KEY_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.whatsappDestino }}\",\n  \"text\": \"{{ $json.mensagemFinal }}\"\n}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "send-whatsapp",
+      "name": "Enviar WhatsApp (Evolution API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1160,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status Envio": "Enviado",
+            "Data Envio": "={{ $json.dataHoraEnvio }}",
+            "Mensagem Enviada": "={{ $json.mensagemFinal }}"
+          },
+          "matchingColumns": [
+            "Link da Fonte"
+          ]
+        }
+      },
+      "id": "google-sheets-update",
+      "name": "Marcar como Enviado no Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1400,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.delaySegundosEspera }}",
+        "unit": "seconds"
+      },
+      "id": "wait-nonlinear",
+      "name": "Pausa Humana Não-Linear (2m a 3.5m)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1640,
+        380
+      ]
+    }
+  ],
+  "connections": {
+    "Agendamento Diário (Seg-Sex 09:30)": {
+      "main": [
+        [
+          {
+            "node": "Ler 40 Pendentes do Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Disparo Manual (Testar Agora)": {
+      "main": [
+        [
+          {
+            "node": "Ler 40 Pendentes do Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler 40 Pendentes do Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop de 1 em 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop de 1 em 1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Sortear Mensagem & Delay Não-Linear",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sortear Mensagem & Delay Não-Linear": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp (Evolution API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp (Evolution API)": {
+      "main": [
+        [
+          {
+            "node": "Marcar como Enviado no Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar como Enviado no Sheets": {
+      "main": [
+        [
+          {
+            "node": "Pausa Humana Não-Linear (2m a 3.5m)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pausa Humana Não-Linear (2m a 3.5m)": {
+      "main": [
+        [
+          {
+            "node": "Loop de 1 em 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

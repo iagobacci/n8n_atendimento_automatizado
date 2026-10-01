@@ -1,0 +1,38 @@
+# =============================================================================
+# GITIGNORE - BACCI DEV • AGENTE IA & WHATSAPP N8N
+# =============================================================================
+
+# Ambientes Virtuais & Python
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# Arquivos de Configuração & Variáveis de Ambiente
+.env
+.env.*
+!.env.example
+
+# Proteção de Dados Sensíveis e LGPD (Planilhas e Contatos Reais)
+*.xlsx
+*.xls
+*.csv
+!exemplos/modelo_planilha_contatos.csv
+
+# Arquivos Multimídia Grandes (> 10MB)
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.rar
+*.zip
+
+# Sistema e IDEs
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
